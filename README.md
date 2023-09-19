@@ -14,7 +14,7 @@ The system consists of: AHRS (using the on board IMU & barometer), computer visi
 
 My plan is to write a RK-4 physics engine in order to model the behaviour of the ROV with a (hopefully) nice visualisation using OpenGL. In order to realistically model the crafts behaviour I'll emulate the control code of the ROV (which runs on a Cortex M4 STM32 dev. board IRL) along with the AHRS data. I have access to the full control source code of the ROV, so emulation shouldn't be a problem. But emulating the sensor input will be something I've never tried before, should be fun.
 
-## How
+## How?
 * OpenGL with GLFW for cross compatibility w/Windows & Mac. We need cross compatibility since we're a team of 8 and I want everyone to be able to run this.  
 * I'll use Dear IMGUI for the GUI. A GUI will be essential for tuning the control parameters and such.
 * Physics should include drag forces and should support partial submersion of the craft. And of course motors should work like real motors, another thing I'm not sure how to implement.
