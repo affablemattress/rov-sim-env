@@ -2,11 +2,11 @@
 
 A simulation environment for our ROV project at IEEE METU RAS.
 
-### Why?
+## Why?
 
 Alright. This won't be easy and will take a couple of months (at least). But I've been dragging my feet about writing a proper desktop program using OpenGL and Dear IMGUI for months now. It's finally the perfect time to do it.
 
-### What?
+## What?
 
 Yeah, we have a ROV project going on, little guy is just a cube at this point and will stay a cube for an undetermined period of time (forever?). It'll have 6 (or 8?) motors vector-thrust for propulsion, will have a camera for computer vision applications, and a microphone array for locating audio sources.
 
