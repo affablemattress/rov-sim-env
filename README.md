@@ -19,4 +19,4 @@ My plan is to write a RK-4 physics engine in order to model the behaviour of the
 * I'll use Dear IMGUI for the GUI. A GUI will be essential for tuning the control parameters and such.
 * Physics should include drag forces and should support partial submersion of the craft. And of course motors should work like real motors, another thing I'm not sure how to implement.
 * I don't know if I can pull this off but if I could somehow make the underwater rendering semi-realistic we could use the renders for testing our computer vision solutions.
-* And want to be able to import the CAD model of the craft for physics and rendering.
+* And I want to be able to import the CAD model of the craft for physics and rendering.
