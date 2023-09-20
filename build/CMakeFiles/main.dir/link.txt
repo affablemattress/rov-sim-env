@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/main.dir/src/main.cpp.o -o ../bin/Release/mainRelease.out  ../bin/Release/lib/libglad.a 

@@ -1,0 +1,4 @@
+/home/kayra/dev/cpp/rov-sim-env/build/CMakeFiles/glad.dir
+/home/kayra/dev/cpp/rov-sim-env/build/CMakeFiles/main.dir
+/home/kayra/dev/cpp/rov-sim-env/build/CMakeFiles/edit_cache.dir
+/home/kayra/dev/cpp/rov-sim-env/build/CMakeFiles/rebuild_cache.dir
