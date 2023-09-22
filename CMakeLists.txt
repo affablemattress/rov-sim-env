@@ -48,7 +48,7 @@ project(cmake-boilerplate)
         ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/Release/lib")
 
 #main.out
-add_executable(main src/main.cpp)
+add_executable(main src/main.cpp src/config.cpp)
 
 target_include_directories(main PUBLIC
     include/)
