@@ -48,30 +48,30 @@ project(cmake-boilerplate)
         ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/Release/lib")
 
 #main.out
-add_executable(main src/main.cpp src/config.cpp)
+    add_executable(main 
+        src/main.cpp
+        src/config.cpp)
 
-target_include_directories(main PUBLIC
-    include/)
+    target_link_libraries(main glad glfw spdlog imgui)
 
-target_include_directories(main PUBLIC 
-    vendor/glad/include 
-    vendor/glfw/include 
-    vendor/imgui 
-    vendor/imgui/backends 
-    vendor/spdlog/include)
+    target_include_directories(main PUBLIC
+        "include/"
+        vendor/glad/include 
+        vendor/glfw/include 
+        vendor/imgui 
+        vendor/imgui/backends 
+        vendor/spdlog/include)
 
-target_compile_definitions(main 
-    PUBLIC "$<$<CONFIG:Debug>:NDEBUG>")
+    set_target_properties(main PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/Debug"
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/Release"
+        SUFFIX ".out")
 
-set_target_properties(main PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/Debug"
-    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/Release"
-    SUFFIX ".out")
-
-target_link_libraries(main glad glfw spdlog)
+    target_compile_definitions(main 
+        PUBLIC "$<$<CONFIG:Debug>:NDEBUG>")
 
 #misc
-set_property(TARGET main glad glfw PROPERTY CXX_EXTENSIONS OFF)
+set_property(GLOBAL PROPERTY CXX_EXTENSIONS OFF)
 set_property(GLOBAL PROPERTY CXX_STANDARD_REQUIRED 20)
 add_compile_options(-Wall)
 
