@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.22)
 project(cmake-boilerplate)
 
+#spdlog.a
+    add_subdirectory("vendor/spdlog")
+
+    set_target_properties(spdlog PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/Debug/lib"
+        ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/Release/lib")
+
 #imgui.a
     add_library(imgui STATIC 
         vendor/imgui/imgui.cpp
@@ -49,8 +56,9 @@ target_include_directories(main PUBLIC
 target_include_directories(main PUBLIC 
     vendor/glad/include 
     vendor/glfw/include 
-    vendor/imgui
-    vendor/imgui/backends)
+    vendor/imgui 
+    vendor/imgui/backends 
+    vendor/spdlog/include)
 
 target_compile_definitions(main 
     PUBLIC "$<$<CONFIG:Debug>:NDEBUG>")
@@ -60,7 +68,7 @@ set_target_properties(main PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/Release"
     SUFFIX ".out")
 
-target_link_libraries(main glad glfw)
+target_link_libraries(main glad glfw spdlog)
 
 #misc
 set_property(TARGET main glad glfw PROPERTY CXX_EXTENSIONS OFF)
