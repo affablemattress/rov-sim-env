@@ -14,11 +14,14 @@ project(cmake-boilerplate)
         vendor/imgui/imgui_draw.cpp
         vendor/imgui/imgui_widgets.cpp
         vendor/imgui/imgui_demo.cpp
-        vendor/imgui/imgui_tables.cpp)
+        vendor/imgui/imgui_tables.cpp
+        vendor/imgui/backends/imgui_impl_glfw.cpp
+        vendor/imgui/backends/imgui_impl_opengl3.cpp)
 
     target_include_directories(imgui PUBLIC 
         vendor/imgui
-        vendor/imgui/backends)
+        vendor/imgui/backends
+        vendor/glfw/include)
 
     set_target_properties(imgui PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/Debug/lib"
@@ -59,7 +62,6 @@ project(cmake-boilerplate)
         vendor/glad/include 
         vendor/glfw/include 
         vendor/imgui 
-        vendor/imgui/backends 
         vendor/spdlog/include)
 
     set_target_properties(main PROPERTIES
@@ -71,8 +73,8 @@ project(cmake-boilerplate)
         PUBLIC "$<$<CONFIG:Debug>:NDEBUG>")
 
 #misc
-set_property(GLOBAL PROPERTY CXX_EXTENSIONS OFF)
-set_property(GLOBAL PROPERTY CXX_STANDARD_REQUIRED 20)
-add_compile_options(-Wall)
+    set_property(GLOBAL PROPERTY CXX_EXTENSIONS OFF)
+    set_property(GLOBAL PROPERTY CXX_STANDARD_REQUIRED 20)
+    add_compile_options(-Wall)
 
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
