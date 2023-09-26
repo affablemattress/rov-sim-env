@@ -8,7 +8,6 @@
 #include "backends/imgui_impl_opengl3.h"
 #include "spdlog/spdlog.h"
 
-#include <iostream>
 #include <stdlib.h>
 
 namespace lifetime {
@@ -77,12 +76,78 @@ int main(int argc, char** args) {
     lifetime::initIMGUI(window);
 
 
+///SETUP VBO
+    const GLfloat vertices[] = {
+        -0.5f, -0.5f, 0.0f,
+        0.5f, -0.5f, 0.0f,
+        0.0f,  0.5f, 0.0f
+    };
+
+    GLuint VBO = 0; 
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+///SETUP VAO FOR VBO
+    GLuint VAO = 0;
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0); 
+
+///SETUP THE SHADER
+    const GLchar* vertexShaderSource = 
+        "#version 330 core\n"
+        "layout (location = 0) in vec3 aPos;\n"
+        "void main() {\n"
+        "    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+        "}\0";
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    glCompileShader(vertexShader);
+
+    const GLchar* fragmentShaderSource = 
+        "#version 330 core\n"
+        "out vec4 fragColor;\n"
+        "void main() {\n"
+        "    fragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+        "}\0";
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+    glCompileShader(fragmentShader);
+    
+    GLint  compilationStatus;
+    GLchar compilationInfoLog[512];
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &compilationStatus);
+    if(!compilationStatus) {
+        glGetShaderInfoLog(vertexShader, 512, NULL, compilationInfoLog);
+        spdlog::error("GLSL compilation error.\n   >GLSL error description start\n\n{0}\n   >GLSL error description end", compilationInfoLog);
+        lifetime::killAll(1);
+    }
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &compilationStatus);
+    if(!compilationStatus) {
+        glGetShaderInfoLog(fragmentShader, 512, NULL, compilationInfoLog);
+        spdlog::error("GLSL compilation error.\n   >GLSL error description start\n\n{0}\n   >GLSL error description end", compilationInfoLog);
+        lifetime::killAll(1);
+    }
+
+    GLuint shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+
+
 ///GAME LOOP
     while(1) {
         ///OPENGL RENDER
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        glUseProgram(shaderProgram);
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         ///IMGUI RENDER
         ImGui_ImplOpenGL3_NewFrame();

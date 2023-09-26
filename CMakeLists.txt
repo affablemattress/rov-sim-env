@@ -5,8 +5,8 @@ project(cmake-boilerplate)
     add_subdirectory("vendor/spdlog")
 
     set_target_properties(spdlog PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/Debug/lib"
-        ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/Release/lib")
+        ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/debug/lib"
+        ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/release/lib")
 
 #imgui.a
     add_library(imgui STATIC 
@@ -24,8 +24,8 @@ project(cmake-boilerplate)
         vendor/glfw/include)
 
     set_target_properties(imgui PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/Debug/lib"
-        ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/Release/lib")
+        ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/debug/lib"
+        ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/release/lib")
 
 #glfw.a
     add_subdirectory("vendor/glfw")
@@ -36,8 +36,8 @@ project(cmake-boilerplate)
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
     set_target_properties(glfw PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/Debug/lib"
-        ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/Release/lib")
+        ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/debug/lib"
+        ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/release/lib")
 
 #glad.a
     add_library(glad STATIC 
@@ -47,8 +47,8 @@ project(cmake-boilerplate)
         vendor/glad/include)
 
     set_target_properties(glad PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/Debug/lib"
-        ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/Release/lib")
+        ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/debug/lib"
+        ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/release/lib")
 
 #main.out
     add_executable(main 
@@ -65,8 +65,8 @@ project(cmake-boilerplate)
         vendor/spdlog/include)
 
     set_target_properties(main PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/Debug"
-        RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/Release"
+        RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/debug"
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/release"
         SUFFIX ".out")
 
     target_compile_definitions(main 
