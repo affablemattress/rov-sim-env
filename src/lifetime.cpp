@@ -24,8 +24,7 @@ namespace lifetime{
     void initIMGUI(GLFWwindow* window) {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO();
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+        ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
         ImGui_ImplGlfw_InitForOpenGL(window, 1);
         ImGui_ImplOpenGL3_Init();
         IMGUIAlive = 1;

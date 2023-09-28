@@ -12,6 +12,25 @@
 
 #include <stdlib.h>
 
+/**
+ * @brief IMGUI global vars.
+ */
+namespace IMVars {
+    static GLfloat position[] = { 0.f, 0.f }; 
+    static ImVec4 framebufferClearColor = ImVec4(0.92f, 0.92f, 0.92f, 1.0f);
+    static ImVec4 vertexColors[4] = {
+        ImVec4(0.5f, 0.2f, 1.0f, 1.0f),
+        ImVec4(0.5f, 1.0f, 0.2f, 1.0f),
+        ImVec4(1.0f, 0.5f, 0.2f, 1.0f),
+        ImVec4(1.0f, 0.2f, 0.5f, 1.0f)
+    };
+}
+
+namespace GLUniformPositions {
+    static GLint position = 0;
+    static GLint vertexColors = 0;
+}
+
 GLFWwindow* createWindow(int windowWidth, int windowHeight, const char* windowTitle) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -61,6 +80,7 @@ int main(int argc, char** args) {
 
 ///SETUP IMGUI (AND ITS BACKENDS)
     lifetime::initIMGUI(window);
+    ImGui::StyleColorsLight();
 
 
 ///SETUP VBO & EBO
@@ -105,15 +125,20 @@ int main(int argc, char** args) {
     const GLchar* vertexShaderSource = 
         "#version 330 core\n"
         "layout (location = 0) in vec3 aPos;\n"
+        "out vec4 vertexColor;\n"
+        "uniform vec2 position;\n"
+        "uniform vec4 vertexColors[4];\n"
         "void main() {\n"
-        "    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+        "    vertexColor = vertexColors[gl_VertexID % 4];\n"
+        "    gl_Position = vec4(aPos.x + position.x, aPos.y + position.y, aPos.z, 1.0);\n"
         "}\0";
 
     const GLchar* fragmentShaderSource = 
         "#version 330 core\n"
+        "in vec4 vertexColor;"
         "out vec4 fragColor;\n"
         "void main() {\n"
-        "    fragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+        "    fragColor = vertexColor;\n"
         "}\0";
 
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -144,14 +169,25 @@ int main(int argc, char** args) {
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
 
-
 ///GAME LOOP
     while(1) {
         ///OPENGL RENDER
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(IMVars::framebufferClearColor.x, IMVars::framebufferClearColor.y, 
+                     IMVars::framebufferClearColor.z, IMVars::framebufferClearColor.w);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shaderProgram);
+        GLUniformPositions::position = glGetUniformLocation(shaderProgram, "position");
+        GLUniformPositions::vertexColors = glGetUniformLocation(shaderProgram, "vertexColors");
+
+        glUniform2fv(GLUniformPositions::position, 1, IMVars::position);
+        GLfloat copyBuffer[4][4];
+        for (size_t i = 0; i < 4; i++) {
+            copyBuffer[i][0] = IMVars::vertexColors[i].x; copyBuffer[i][1] = IMVars::vertexColors[i].y; 
+            copyBuffer[i][2] = IMVars::vertexColors[i].z; copyBuffer[i][3] = IMVars::vertexColors[i].w;
+        }
+        glUniform4fv(GLUniformPositions::vertexColors, 4, (GLfloat*)copyBuffer);
+
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
 
@@ -160,7 +196,21 @@ int main(int argc, char** args) {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::ShowDemoWindow(); 
+        ImGui::Begin("rov-sim-env GUI", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+
+        ImGui::SeparatorText("POSITION");
+        ImGui::SliderFloat("X", &IMVars::position[0], -0.7f, 0.7f);
+        ImGui::SliderFloat("Y", &IMVars::position[1], -0.7f, 0.7f);
+        ImGui::SeparatorText("COLOR");
+        ImGui::ColorEdit3("Clear", (float*)&IMVars::framebufferClearColor);
+        for (size_t i = 0; i < 4; i++) {
+            char colorSliderText[50];
+            sprintf(colorSliderText, "Vertex %d", (int)i);
+            ImGui::ColorEdit3(colorSliderText, (float*)&IMVars::vertexColors[i]);
+        }
+        ImGui::SeparatorText("PERFORMANCE");
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::End();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
