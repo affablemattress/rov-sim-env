@@ -1,6 +1,8 @@
 #include "config.hpp"
 
-#define GLFW_INCLUDE_NONE
+#include "lifetime.hpp"
+#include "callbackGLFW.hpp"
+
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
 #include "imgui.h"
@@ -9,21 +11,6 @@
 #include "spdlog/spdlog.h"
 
 #include <stdlib.h>
-
-namespace lifetime {
-    inline void initSPDLOG();
-    inline void initGLFW();
-    inline void initIMGUI(GLFWwindow* window);
-    inline void killIMGUI();
-    
-    inline void killAll(uint8_t error);
-}
-
-namespace callbackGLFW {
-    void error(int error, const char* description);
-    void windowResize(GLFWwindow* window, int width, int height);
-    void keyAction(GLFWwindow* window, int key, int scancode, int action, int mods);
-}
 
 GLFWwindow* createWindow(int windowWidth, int windowHeight, const char* windowTitle) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -76,19 +63,32 @@ int main(int argc, char** args) {
     lifetime::initIMGUI(window);
 
 
-///SETUP VBO
+///SETUP VBO & EBO
     const GLfloat vertices[] = {
-        -0.5f, -0.5f, 0.0f,
+        0.5f,  0.5f, 0.0f,
         0.5f, -0.5f, 0.0f,
-        0.0f,  0.5f, 0.0f
+        -0.5f, -0.5f, 0.0f,
+        -0.5f,  0.5f, 0.0f 
+    };
+
+    const GLuint indices[] = {
+        0, 1, 3,
+        1, 2, 3 
     };
 
     GLuint VBO = 0; 
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-///SETUP VAO FOR VBO
+
+    GLuint EBO = 0;
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+///SETUP VAO FOR OBJECT
     GLuint VAO = 0;
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
@@ -97,6 +97,10 @@ int main(int argc, char** args) {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0); 
 
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+
+    glBindVertexArray(0);
+
 ///SETUP THE SHADER
     const GLchar* vertexShaderSource = 
         "#version 330 core\n"
@@ -104,9 +108,6 @@ int main(int argc, char** args) {
         "void main() {\n"
         "    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
         "}\0";
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
 
     const GLchar* fragmentShaderSource = 
         "#version 330 core\n"
@@ -114,6 +115,11 @@ int main(int argc, char** args) {
         "void main() {\n"
         "    fragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
         "}\0";
+
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    glCompileShader(vertexShader);
+
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
@@ -147,7 +153,7 @@ int main(int argc, char** args) {
 
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
 
         ///IMGUI RENDER
         ImGui_ImplOpenGL3_NewFrame();
@@ -174,92 +180,4 @@ int main(int argc, char** args) {
 ///DESTROY IMGUI, (WINDOW & CONTEXT &) GLFW. THEN TERMINATE
     lifetime::killAll(0);
     exit(EXIT_SUCCESS);
-}
-
-namespace callbackGLFW {
-    void error(int error, const char* description) {
-        spdlog::error("GLFW error.\n   >GLFW description start\n\n{0}\n\n   >GLFW description end", description);
-        lifetime::killAll(1);
-    }
-
-    void windowResize(GLFWwindow* window, int width, int height) {
-        static int framebufferWidth, framebufferHeight;
-        glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
-        glViewport(0, 0, framebufferWidth, framebufferHeight);
-    }
-
-    void keyAction(GLFWwindow* window, int key, int scancode, int action, int mods) {
-        if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-            glfwSetWindowShouldClose(window, 1);
-        }
-    }
-}
-
-namespace lifetime{
-    uint8_t IMGUIAlive; //Is IMGUI initialized
-    uint8_t GLFWAlive; //Is GLFW initialized
-    uint8_t SPDLOGAlive; //Is SPDLOG initialized
-
-    inline void initSPDLOG() {
-        spdlog::set_level(spdlog::level::info);
-        SPDLOGAlive = 1;
-    }
-
-    inline void initGLFW() {
-        if(glfwInit() != GLFW_TRUE) {
-            spdlog::error("GLFW couldn't init.");
-            lifetime::killAll(1);
-        }
-        else {
-            lifetime::GLFWAlive = 1;
-        }
-    }
-
-    inline void initIMGUI(GLFWwindow* window) {
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO();
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-        ImGui_ImplGlfw_InitForOpenGL(window, 1);
-        ImGui_ImplOpenGL3_Init();
-        IMGUIAlive = 1;
-    }
-
-    inline void killIMGUI() {
-        ImGui_ImplOpenGL3_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
-        ImGui::DestroyContext();
-        IMGUIAlive = 0;
-    }
-
-    /// @brief Kills all. Logs event with GLFW timestamp.
-    /// @param error If set to 1, logs error & aborts. If 0, logs info & DOESN'T ABORT.
-    inline void killAll(uint8_t error) {
-        if(GLFWAlive) { // Log Event
-            if(error) {
-                spdlog::error("You've done it again... Committing dead. [glfwTime : {0:.3f}(s)]", glfwGetTime());
-            } 
-            else {
-                spdlog::info("GLFW terminating. [glfwTime : {0:.3f}(s)]", glfwGetTime());
-            }
-        } 
-        else {
-            if(error) {
-                spdlog::error("You've done it again... Committing dead. [glfwTime : NOGLFW]");
-            } 
-        }
-
-        if(IMGUIAlive) {
-            killIMGUI();
-            IMGUIAlive = 0;
-        }
-        if(GLFWAlive) {
-            glfwTerminate();
-            GLFWAlive = 0;
-        }
-
-        if(error) {
-            abort();
-        }
-    }
 }
