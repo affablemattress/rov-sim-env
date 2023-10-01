@@ -55,7 +55,8 @@ project(cmake-boilerplate)
         src/main.cpp
         src/config.cpp
         src/callbackGLFW.cpp 
-        src/lifetime.cpp)
+        src/lifetime.cpp 
+        src/shader.cpp)
 
     target_link_libraries(main glad glfw spdlog imgui)
 

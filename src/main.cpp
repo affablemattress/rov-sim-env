@@ -2,6 +2,7 @@
 
 #include "lifetime.hpp"
 #include "callbackGLFW.hpp"
+#include "shader.hpp"
 
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
@@ -11,6 +12,7 @@
 #include "spdlog/spdlog.h"
 
 #include <stdlib.h>
+#include <time.h>
 
 /**
  * @brief IMGUI global vars.
@@ -78,9 +80,12 @@ int main(int argc, char** args) {
     glfwSetKeyCallback(window, (GLFWkeyfun)&callbackGLFW::keyAction);
 
 
-///SETUP IMGUI (AND ITS BACKENDS)
+///SETUP IMGUI
     lifetime::initIMGUI(window);
     ImGui::StyleColorsLight();
+    srand(time(NULL));
+    IMVars::position[1] = 0.7f - ((rand() % 140) / 100.f);
+    IMVars::position[0] = 0.7f - ((rand() % 140) / 100.f);
 
 
 ///SETUP VBO & EBO
@@ -92,7 +97,7 @@ int main(int argc, char** args) {
     };
 
     const GLuint indices[] = {
-        0, 1, 3,
+        0, 1, 3, 
         1, 2, 3 
     };
 
@@ -121,64 +126,28 @@ int main(int argc, char** args) {
 
     glBindVertexArray(0);
 
-///SETUP THE SHADER
-    const GLchar* vertexShaderSource = 
-        "#version 330 core\n"
-        "layout (location = 0) in vec3 aPos;\n"
-        "out vec4 vertexColor;\n"
-        "uniform vec2 position;\n"
-        "uniform vec4 vertexColors[4];\n"
-        "void main() {\n"
-        "    vertexColor = vertexColors[gl_VertexID % 4];\n"
-        "    gl_Position = vec4(aPos.x + position.x, aPos.y + position.y, aPos.z, 1.0);\n"
-        "}\0";
-
-    const GLchar* fragmentShaderSource = 
-        "#version 330 core\n"
-        "in vec4 vertexColor;"
-        "out vec4 fragColor;\n"
-        "void main() {\n"
-        "    fragColor = vertexColor;\n"
-        "}\0";
-
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    
-    GLint  compilationStatus;
-    GLchar compilationInfoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &compilationStatus);
-    if(!compilationStatus) {
-        glGetShaderInfoLog(vertexShader, 512, NULL, compilationInfoLog);
-        spdlog::error("GLSL compilation error.\n   >GLSL error description start\n\n{0}\n   >GLSL error description end", compilationInfoLog);
-        lifetime::killAll(1);
-    }
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &compilationStatus);
-    if(!compilationStatus) {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, compilationInfoLog);
-        spdlog::error("GLSL compilation error.\n   >GLSL error description start\n\n{0}\n   >GLSL error description end", compilationInfoLog);
-        lifetime::killAll(1);
-    }
+///SETUP THE SHADER, GET UNIFORM LOCATIONS
+    GLuint vertexShader = shader::compileShaderFromPath(PROJECT_PATH"res/shader/vertex.glsl", GL_VERTEX_SHADER);
+    GLuint fragmentShader = shader::compileShaderFromPath(PROJECT_PATH"res/shader/fragment.glsl", GL_FRAGMENT_SHADER);
 
     GLuint shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
 
+    GLUniformPositions::position = glGetUniformLocation(shaderProgram, "position");
+    GLUniformPositions::vertexColors = glGetUniformLocation(shaderProgram, "vertexColors");
+
 ///GAME LOOP
     while(1) {
-        ///OPENGL RENDER
+        //CLEAR
         glClearColor(IMVars::framebufferClearColor.x, IMVars::framebufferClearColor.y, 
                      IMVars::framebufferClearColor.z, IMVars::framebufferClearColor.w);
         glClear(GL_COLOR_BUFFER_BIT);
 
+
+        ///OPENGL RENDER
         glUseProgram(shaderProgram);
-        GLUniformPositions::position = glGetUniformLocation(shaderProgram, "position");
-        GLUniformPositions::vertexColors = glGetUniformLocation(shaderProgram, "vertexColors");
 
         glUniform2fv(GLUniformPositions::position, 1, IMVars::position);
         GLfloat copyBuffer[4][4];
@@ -190,6 +159,7 @@ int main(int argc, char** args) {
 
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
+
 
         ///IMGUI RENDER
         ImGui_ImplOpenGL3_NewFrame();
@@ -209,7 +179,7 @@ int main(int argc, char** args) {
             ImGui::ColorEdit3(colorSliderText, (float*)&IMVars::vertexColors[i]);
         }
         ImGui::SeparatorText("PERFORMANCE");
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::Text("Application average %.3f ms/f rame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();
 
         ImGui::Render();
@@ -220,12 +190,12 @@ int main(int argc, char** args) {
         glfwSwapBuffers(window);
         glfwPollEvents();
 
+
         ///EXIT?
         if(glfwWindowShouldClose(window)) {
             break;
         }
     }
-
 
 ///DESTROY IMGUI, (WINDOW & CONTEXT &) GLFW. THEN TERMINATE
     lifetime::killAll(0);

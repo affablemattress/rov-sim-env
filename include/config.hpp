@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #define GLFW_INCLUDE_NONE
+#define PROJECT_PATH "/home/kayra/dev/cpp/rov-sim-env/"
 
 namespace cfg {
     namespace window {
