@@ -2,8 +2,12 @@
 
 #include <stdint.h>
 
-#define GLFW_INCLUDE_NONE
 #define PROJECT_PATH "/home/kayra/dev/cpp/rov-sim-env/"
+
+#define GLFW_INCLUDE_NONE
+
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ONLY_PNG
 
 namespace cfg {
     namespace window {

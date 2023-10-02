@@ -65,7 +65,8 @@ project(cmake-boilerplate)
         vendor/glad/include 
         vendor/glfw/include 
         vendor/imgui 
-        vendor/spdlog/include)
+        vendor/spdlog/include 
+        vendor/stb/)
 
     set_target_properties(main PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/debug"
