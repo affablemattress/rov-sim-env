@@ -38,6 +38,7 @@ namespace ImVars
 {
     static GLfloat position[] = {0.f, 0.f};
     static GLfloat zoom = 1.f;
+    static GLint rotation = 0;
     static ImVec4 framebufferClearColor = ImVec4(0.92f, 0.92f, 0.92f, 1.0f);
     static ImVec4 vertexColors[4] = {
         ImVec4(0.5f, 0.2f, 1.0f, 1.0f),
@@ -245,7 +246,10 @@ int main(int argc, char **args) {
 
         glUniform1f(GLUniformPositions::mixWeight, ImVars::mixWeight);
 
-        modelToWorld = glm::translate(glm::scale(glm::mat4(1.f), glm::vec3(ImVars::zoom, ImVars::zoom, 1.f)), glm::vec3(ImVars::position[0], ImVars::position[1], 0.f));
+        modelToWorld = glm::mat4(1.f);
+        modelToWorld = glm::translate(modelToWorld, glm::vec3(ImVars::position[0], ImVars::position[1], 0.f));
+        modelToWorld = glm::scale(modelToWorld, glm::vec3(ImVars::zoom, ImVars::zoom, 1.f));
+        modelToWorld = glm::rotate(modelToWorld, (float)M_PI * ImVars::rotation / 180, glm::vec3(0.f, 0.f, 1.f));
         glUniformMatrix4fv(GLUniformPositions::modelToWorld, 1, GL_FALSE, glm::value_ptr(modelToWorld));
 
         glBindVertexArray(VAO);
@@ -262,9 +266,9 @@ int main(int argc, char **args) {
             ImGui::Begin("rov-sim-env GUI", NULL, ImGuiWindowFlags_AlwaysAutoResize);
 
             ImGui::SeparatorText("TRANSFORM");
-            ImGui::SliderFloat("X", &ImVars::position[0], -0.7f, 0.7f);
-            ImGui::SliderFloat("Y", &ImVars::position[1], -0.7f, 0.7f);
-            ImGui::SliderFloat("Zoom", &ImVars::zoom, 0.1f, 3.f);
+            ImGui::SliderFloat2("Translate", ImVars::position, -0.7f, 0.7f);
+            ImGui::SliderFloat("Scale", &ImVars::zoom, 0.1f, 3.f);
+            ImGui::SliderInt("Rotate", &ImVars::rotation, 180, -180);
 
             ImGui::SeparatorText("COLOR");
             ImGui::ColorEdit3("Clear", (float *)&ImVars::framebufferClearColor);
