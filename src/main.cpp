@@ -1,4 +1,4 @@
-#include "config.hpp"
+#include "main.hpp"
 
 #include "lifetime.hpp"
 #include "callbackGLFW.hpp"
@@ -31,14 +31,22 @@ GLFWwindow *createWindow(int windowWidth, int windowHeight, const char *windowTi
     return window;
 }
 
+glm::vec3 cameraPosition = glm::vec3(0.f, 0.f, 1.f);
+
+namespace common {
+    int16_t framebufferWidth = cfg::window::width;
+    int16_t framebufferHeight = cfg::window::height;
+    float fov = cfg::window::fov;
+}
+
 /**
  * @brief IMGUI global vars.
  */
 namespace ImVars
 {
-    static GLfloat position[] = {0.f, 0.f};
-    static GLfloat zoom = 1.f;
-    static GLint rotation = 0;
+    static GLfloat position[3] = {0.f, 0.f, 0.f};
+    static GLfloat rotation[3] = { -45.f, -45.f, -45.f};
+    static GLfloat scale [3]= { 1.f, 1.f, 1.f};
     static ImVec4 framebufferClearColor = ImVec4(0.92f, 0.92f, 0.92f, 1.0f);
     static ImVec4 vertexColors[4] = {
         ImVec4(0.5f, 0.2f, 1.0f, 1.0f),
@@ -47,6 +55,7 @@ namespace ImVars
         ImVec4(1.0f, 0.2f, 0.5f, 1.0f)};
     static GLfloat mixWeight = 0.6f;
     static bool isWireframe = 0;
+    float& fov = common::fov; 
 }
 
 /**
@@ -58,10 +67,15 @@ namespace GLUniformPositions
     static GLint texture0Sampler = 0;
     static GLint texture1Sampler = 0;
     static GLint mixWeight = 0;
-    static GLint modelToWorld = 0;
+    static GLint modelMatrix = 0;
+    static GLint viewMatrix = 0;
+    static GLint projectionMatrix = 0;
 }
 
-glm::mat4 modelToWorld = glm::mat4(1.f);
+glm::mat4 modelMatrix = glm::mat4(1.f);
+glm::mat4 viewMatrix = glm::translate(glm::mat4(1.f), -cameraPosition);
+glm::mat4 projectionMatrix = glm::perspective(glm::radians(ImVars::fov), (float)cfg::window::width / cfg::window::height, 0.1f, 100.0f);
+
 
 int main(int argc, char **args) {
     /**
@@ -115,8 +129,15 @@ int main(int argc, char **args) {
     lifetime::initIMGUI(window);
     ImGui::StyleColorsLight();
     srand(time(NULL));
-    ImVars::position[1] = 0.7f - ((rand() % 140) / 100.f);
-    ImVars::position[0] = 0.7f - ((rand() % 140) / 100.f);
+    ImVars::position[0] = 2.f - ((rand() % 401) / 100.f);
+    ImVars::position[1] = 2.f - ((rand() % 401) / 100.f);
+    ImVars::position[2] = -3.f - ((rand() % 401) / 100.f);
+    ImVars::rotation[0] = 180.f - ((rand() % 3601) / 10.f);
+    ImVars::rotation[1] = 180.f - ((rand() % 3601) / 10.f);
+    ImVars::rotation[2] = 180.f - ((rand() % 3601) / 10.f);
+    ImVars::scale[0] = 4.f - ((rand() % 201) / 100.f);
+    ImVars::scale[1] = 4.f - ((rand() % 201) / 100.f);
+    ImVars::scale[2] = 4.f - ((rand() % 201) / 100.f);
 
     /**
      * SETUP VBO & EBO
@@ -131,7 +152,8 @@ int main(int argc, char **args) {
 
     const GLuint indices[] = {
         0, 1, 3,
-        1, 2, 3};
+        1, 2, 3
+    };
 
     GLuint VBO = 0;
     {
@@ -176,7 +198,7 @@ int main(int argc, char **args) {
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         int textureX, textureY, textureChannels;
@@ -205,7 +227,10 @@ int main(int argc, char **args) {
         GLUniformPositions::texture0Sampler = glGetUniformLocation(shaderProgram, "texture0");
         GLUniformPositions::texture1Sampler = glGetUniformLocation(shaderProgram, "texture1");
         GLUniformPositions::mixWeight = glGetUniformLocation(shaderProgram, "mixWeight");
-        GLUniformPositions::modelToWorld = glGetUniformLocation(shaderProgram, "modelToWorld");
+
+        GLUniformPositions::modelMatrix = glGetUniformLocation(shaderProgram, "modelMatrix");
+        GLUniformPositions::viewMatrix = glGetUniformLocation(shaderProgram, "viewMatrix");
+        GLUniformPositions::projectionMatrix = glGetUniformLocation(shaderProgram, "projectionMatrix");
 
         glUseProgram(shaderProgram);
         glUniform1i(GLUniformPositions::texture0Sampler, 0);
@@ -246,11 +271,16 @@ int main(int argc, char **args) {
 
         glUniform1f(GLUniformPositions::mixWeight, ImVars::mixWeight);
 
-        modelToWorld = glm::mat4(1.f);
-        modelToWorld = glm::translate(modelToWorld, glm::vec3(ImVars::position[0], ImVars::position[1], 0.f));
-        modelToWorld = glm::scale(modelToWorld, glm::vec3(ImVars::zoom, ImVars::zoom, 1.f));
-        modelToWorld = glm::rotate(modelToWorld, (float)M_PI * ImVars::rotation / 180, glm::vec3(0.f, 0.f, 1.f));
-        glUniformMatrix4fv(GLUniformPositions::modelToWorld, 1, GL_FALSE, glm::value_ptr(modelToWorld));
+        modelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(ImVars::position[0], ImVars::position[1], ImVars::position[2]));
+        modelMatrix = glm::rotate(modelMatrix, glm::radians((float)ImVars::rotation[0]), glm::vec3(1.f, 0.f, 0.f));
+        modelMatrix = glm::rotate(modelMatrix, glm::radians((float)ImVars::rotation[1]), glm::vec3(0.f, 1.f, 0.f));
+        modelMatrix = glm::rotate(modelMatrix, glm::radians((float)ImVars::rotation[2]), glm::vec3(0.f, 0.f, 1.f));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(ImVars::scale[0], ImVars::scale[1], ImVars::scale[2]));
+        glUniformMatrix4fv(GLUniformPositions::modelMatrix, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+        glm::translate(glm::mat4(1.f), -cameraPosition);
+        glUniformMatrix4fv(GLUniformPositions::viewMatrix, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+        projectionMatrix = glm::perspective(glm::radians(common::fov), (float)common::framebufferWidth / common::framebufferHeight, 0.1f, 100.0f);
+        glUniformMatrix4fv(GLUniformPositions::projectionMatrix, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
         glBindVertexArray(VAO);
 
@@ -265,10 +295,13 @@ int main(int argc, char **args) {
         {
             ImGui::Begin("rov-sim-env GUI", NULL, ImGuiWindowFlags_AlwaysAutoResize);
 
+            ImGui::SeparatorText("CAMERA");
+            ImGui::SliderFloat("FOV", &ImVars::fov, 30.f, 90.f);
+
             ImGui::SeparatorText("TRANSFORM");
-            ImGui::SliderFloat2("Translate", ImVars::position, -0.7f, 0.7f);
-            ImGui::SliderFloat("Scale", &ImVars::zoom, 0.1f, 3.f);
-            ImGui::SliderInt("Rotate", &ImVars::rotation, 180, -180);
+            ImGui::SliderFloat3("Translate", ImVars::position, -10.f, 10.f);
+            ImGui::SliderFloat3("Scale", ImVars::scale, 0.01f, 10.f);
+            ImGui::SliderFloat3("Rotate", ImVars::rotation, 180.f, -180.f);
 
             ImGui::SeparatorText("COLOR");
             ImGui::ColorEdit3("Clear", (float *)&ImVars::framebufferClearColor);

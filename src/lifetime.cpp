@@ -1,5 +1,9 @@
 #include "lifetime.hpp"
 
+#include "imgui.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_opengl3.h"
+#include "spdlog/spdlog.h"
 
 namespace lifetime{
     uint8_t IMGUIAlive;

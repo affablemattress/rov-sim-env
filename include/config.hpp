@@ -13,6 +13,7 @@ namespace cfg {
     namespace window {
         extern const uint16_t width;
         extern const uint16_t height;
+        extern const float fov;
         extern const char* title;
     }
 }

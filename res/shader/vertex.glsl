@@ -6,12 +6,15 @@ layout (location = 1) in vec2 vertexTexCoord;
 out vec4 vertexColor;
 out vec2 texCoord;
 
-uniform mat4 modelToWorld;
 uniform vec4 vertexColors[4];
+
+uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 projectionMatrix;
 
 void main() {
     vertexColor = vertexColors[gl_VertexID % 4];
     
     texCoord = vertexTexCoord;
-    gl_Position = modelToWorld * vec4(vertexPos, 1.f);
+    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(vertexPos, 1.f);
 }

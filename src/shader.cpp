@@ -1,5 +1,14 @@
 #include "shader.hpp"
 
+#include "config.hpp"
+#include "lifetime.hpp"
+
+#include "GLFW/glfw3.h"
+#include "glad/glad.h"
+#include "spdlog/spdlog.h"
+
+#include <stdio.h>
+
 namespace shader {
     GLuint compileShaderFromPath(const char* filepath, GLint shaderType) {
         spdlog::info("Compiling (type: {0}) shader at path: {1}", shaderType, filepath);

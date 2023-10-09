@@ -1,13 +1,8 @@
 #pragma once
 
 #include "config.hpp"
-#include "lifetime.hpp"
 
-#include "GLFW/glfw3.h"
 #include "glad/glad.h"
-#include "spdlog/spdlog.h"
-
-#include <stdio.h>
 
 #define SHADER_SOURCE_BUFFER_SIZE 8192
 #define SHADER_ERROR_BUFFER_SIZE 512
