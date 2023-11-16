@@ -8,6 +8,8 @@
  * @brief GLFW callbacks.
  */
 namespace callbackGLFW {
+    void setWindowCallbacks(GLFWwindow* window);
+
     /**
      * @brief Logs GLFW errors.
      * 
@@ -17,7 +19,7 @@ namespace callbackGLFW {
 
     /**
      * @brief Called by GLFW on window resize event. Re-sets GL viewport size.
-     * 
+     * GLAD must be initialized since GL calls are made to set the viewport.
      * @param window window of event
      */
     void windowResize(GLFWwindow* window, int width, int height);

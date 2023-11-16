@@ -1,7 +1,8 @@
 #include "callbackGLFW.hpp"
 
-#include "main.hpp"
 #include "lifetime.hpp"
+#include "window.hpp"
+#include "camera.hpp"
 
 #include "glad/glad.h"
 #include "spdlog/spdlog.h"
@@ -10,6 +11,11 @@
 #include "glm/gtc/type_ptr.hpp"
 
 namespace callbackGLFW {
+    void setWindowCallbacks(GLFWwindow* window) {
+        glfwSetFramebufferSizeCallback(window, (GLFWframebuffersizefun)&callbackGLFW::windowResize);
+        glfwSetKeyCallback(window, (GLFWkeyfun)&callbackGLFW::keyAction);
+    }
+    
     void error(int error, const char* description) {
         spdlog::error("GLFW error.\n   >GLFW description start\n\n{0}\n\n   >GLFW description end", description);
         lifetime::killAll(1);
@@ -20,9 +26,9 @@ namespace callbackGLFW {
         glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
         glViewport(0, 0, framebufferWidth, framebufferHeight);
 
-        common::framebufferWidth = framebufferWidth;
-        common::framebufferHeight = framebufferHeight;
-        projectionMatrix = glm::perspective(glm::radians(common::fov), (float)common::framebufferWidth / common::framebufferHeight, 0.1f, 100.0f);
+        window::framebufferWidth = framebufferWidth;
+        window::framebufferHeight = framebufferHeight;
+        camera::projectionMatrix = glm::perspective(glm::radians(camera::fov), (float)window::framebufferWidth / window::framebufferHeight, 0.1f, 100.0f);
     }
 
     void keyAction(GLFWwindow* window, int key, int scancode, int action, int mods) {

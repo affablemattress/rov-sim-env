@@ -1,6 +1,5 @@
 #include "shader.hpp"
 
-#include "config.hpp"
 #include "lifetime.hpp"
 
 #include "GLFW/glfw3.h"
@@ -11,7 +10,7 @@
 
 namespace shader {
     GLuint compileShaderFromPath(const char* filepath, GLint shaderType) {
-        spdlog::info("Compiling (type: {0}) shader at path: {1}", shaderType, filepath);
+        spdlog::info("Compiling shader (type: {0}) at path: {1}", shaderType, filepath);
         FILE* shaderFile = fopen(filepath, "r");
         if(!shaderFile) {
             spdlog::error("Couldn't open file: {0}", filepath);

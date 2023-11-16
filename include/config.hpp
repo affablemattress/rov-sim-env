@@ -6,14 +6,6 @@
 
 #define GLFW_INCLUDE_NONE
 
+#define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_PNG
-
-namespace cfg {
-    namespace window {
-        extern const uint16_t width;
-        extern const uint16_t height;
-        extern const float fov;
-        extern const char* title;
-    }
-}
