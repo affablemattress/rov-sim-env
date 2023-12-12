@@ -3,12 +3,11 @@
 #include "shader.hpp"
 #include "window.hpp"
 #include "camera.hpp"
+#include "gui.hpp"
+#include "math.hpp"
 
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
-#include "imgui.h"
-#include "backends/imgui_impl_glfw.h"
-#include "backends/imgui_impl_opengl3.h"
 #include "spdlog/spdlog.h"
 #include "stb_image.h"
 #include "glm/glm.hpp"
@@ -17,45 +16,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-/**
- * @brief IMGUI global vars.
- */
-namespace ImVars {
-    float static &fov = camera::fov; 
-    
-    static GLfloat position[3] = {0.f, 0.f, 0.f};
-    static GLfloat rotation[3] = { -45.f, -45.f, -45.f};
-    static GLfloat scale [3]= { 1.f, 1.f, 1.f};
-
-    static ImVec4 framebufferClearColor = ImVec4(0.92f, 0.92f, 0.92f, 1.0f);
-    static ImVec4 vertexColors[4] = {
-        ImVec4(0.5f, 0.2f, 1.0f, 1.0f),
-        ImVec4(0.5f, 1.0f, 0.2f, 1.0f),
-        ImVec4(1.0f, 0.5f, 0.2f, 1.0f),
-        ImVec4(1.0f, 0.2f, 0.5f, 1.0f)};
-    static GLfloat mixWeight = 0.6f;
-
-    static bool isWireframe = 0;
-}
-
-/**
- * @brief OpenGL shader uniform locations.
- */
-namespace GLUniformPositions {
-    static GLint vertexColors = 0;
-    static GLint texture0Sampler = 0;
-    static GLint texture1Sampler = 0;
-    static GLint mixWeight = 0;
-    static GLint modelMatrix = 0;
-    static GLint viewMatrix = 0;
-    static GLint projectionMatrix = 0;
-}
-
-glm::mat4 modelMatrix = glm::mat4(1.f);
-
 int main(int argc, char **args) {
-    srand(time(NULL));
-
     lifetime::initSPDLOG(spdlog::level::level_enum::info, "Started rov-sim-env...");
     lifetime::initSTBI();
     lifetime::initGLFW(callbackGLFW::error, "GLFW init.");
@@ -76,20 +37,23 @@ int main(int argc, char **args) {
 
 
     /**
-     * SETUP IMGUI
+     * INIT SCENE
      */
     callbackGLFW::windowResize(window, 0, 0); // Call resize callback to set window vars & projection matrix...
-    {
-        ImVars::position[0] = 2.f - ((rand() % 401) / 100.f);
-        ImVars::position[1] = 2.f - ((rand() % 401) / 100.f);
-        ImVars::position[2] = -3.f - ((rand() % 401) / 100.f);
-        ImVars::rotation[0] = 180.f - ((rand() % 3601) / 10.f);
-        ImVars::rotation[1] = 180.f - ((rand() % 3601) / 10.f);
-        ImVars::rotation[2] = 180.f - ((rand() % 3601) / 10.f);
-        ImVars::scale[0] = 4.f - ((rand() % 201) / 100.f);
-        ImVars::scale[1] = 4.f - ((rand() % 201) / 100.f);
-        ImVars::scale[2] = 4.f - ((rand() % 201) / 100.f);
-    }
+
+    /**
+     * SETUP THE SHADER, GET UNIFORM LOCATIONS
+     */
+    shader::program program;
+    program.id = glCreateProgram();
+    shader::compileProgram(&program, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
+
+    const GLchar* programUniforms[7] = { "vertexColors", "modelMatrix", "viewMatrix", "projectionMatrix", "mixWeight", "texture0", "texture1"};
+    shader::pushUniforms(&program, 7, programUniforms);
+
+    glUseProgram(program.id);
+    glUniform1i(program.uniforms["texture0"], 0);
+    glUniform1i(program.uniforms["texture1"], 1);
 
     /**
      * PUSH DATA TO VBO & EBO
@@ -102,18 +66,55 @@ int main(int argc, char **args) {
         //VBO
         const GLfloat vertices[] = {
             //VERTEX 3x(float), TEXTURE COORD. 2x(float)
-             0.5f,  0.5f,  0.0f,  1.f, 1.f,
-             0.5f, -0.5f,  0.0f,  1.f, 0.f,
-            -0.5f, -0.5f,  0.0f,  0.f, 0.f,
-            -0.5f,  0.5f,  0.0f,  0.f, 1.f
+            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+             0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+             0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            -0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
+
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+             0.5f, -0.5f,  0.5f,  0.0f, 1.0f,
+             0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+            -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+            -0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+
+             0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+             0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+             0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+             0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+
+             0.5f, -0.5f,  0.5f,  1.0f, 1.0f,
+
+            -0.5f,  0.5f, -0.5f,  0.0f, 0.0f,
+             0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+             0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
         };
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
         //EBO
         const GLuint indices[] = {
-            0, 1, 3,
-            1, 2, 3
+            0,  1,  2,
+            2,  3,  0,
+
+            4,  5,  6,
+            6,  7,  4,
+            
+            8, 9, 10,
+            10, 11, 8,
+            
+            12, 13, 14,
+            14, 15, 12,
+            
+            0, 1, 16,
+            16, 11, 0,
+
+            17, 13, 6,
+            6, 7, 17
         };
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
@@ -147,8 +148,8 @@ int main(int argc, char **args) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        int textureX, textureY, textureChannels;
-        unsigned char* textureData = stbi_load(PROJECT_PATH "res/texture/kenney/png/Dark/texture_13.png", &textureX, &textureY, &textureChannels, 3);
+        GLint textureX, textureY, textureChannels;
+        stbi_uc* textureData = stbi_load(PROJECT_PATH "res/texture/kenney/png/Dark/texture_13.png", &textureX, &textureY, &textureChannels, 3);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
@@ -158,127 +159,90 @@ int main(int argc, char **args) {
         stbi_image_free(textureData);
     }
 
-    /**
-     * SETUP THE SHADER, GET UNIFORM LOCATIONS
-     */
-    GLuint shaderProgram = glCreateProgram();
-    {
-        GLuint vertexShader = shader::compileShaderFromPath(PROJECT_PATH "res/shader/vertex.glsl", GL_VERTEX_SHADER);
-        GLuint fragmentShader = shader::compileShaderFromPath(PROJECT_PATH "res/shader/fragment.glsl", GL_FRAGMENT_SHADER);
-        glAttachShader(shaderProgram, vertexShader);
-        glAttachShader(shaderProgram, fragmentShader);
-        glLinkProgram(shaderProgram);
+    camera::object mainCamera = { 
+        .framebufferClearColor = { 0.92f, 0.92f, 0.92f, 1.0f },
+        .position = { 0.0f, 0.0f, 1.0f },
+        .fov = 75,
+        .framebufferWidth = window::framebufferWidth,
+        .framebufferHeight = window::framebufferHeight
+    };
 
-        GLUniformPositions::vertexColors = glGetUniformLocation(shaderProgram, "vertexColors");
-        GLUniformPositions::modelMatrix = glGetUniformLocation(shaderProgram, "modelMatrix");
-        GLUniformPositions::viewMatrix = glGetUniformLocation(shaderProgram, "viewMatrix");
-        GLUniformPositions::projectionMatrix = glGetUniformLocation(shaderProgram, "projectionMatrix");
+    struct _mainData {
+        float position[3];
+        float rotation[3];
+        float scale[3];
+        float vertexColors[4][4];
+        float mixWeight;
+    } mainObjectData = {
+        .position = {0.f, 0.f, 0.f},
+        .rotation = { -45.f, -45.f, -45.f},
+        .scale = { 1.f, 1.f, 1.f },
+        .vertexColors = { { 0.5f, 0.2f, 1.0f, 1.0f },
+                          { 0.5f, 1.0f, 0.2f, 1.0f },
+                          { 1.0f, 0.5f, 0.2f, 1.0f },
+                          { 1.0f, 0.2f, 0.5f, 1.0f } },
+        .mixWeight = 0.6f
+    };
 
-        GLUniformPositions::mixWeight = glGetUniformLocation(shaderProgram, "mixWeight");
-        GLUniformPositions::texture0Sampler = glGetUniformLocation(shaderProgram, "texture0");
-        GLUniformPositions::texture1Sampler = glGetUniformLocation(shaderProgram, "texture1");
+    gui::vars guiVars = {
+        .framebufferClearColor = &mainCamera.framebufferClearColor,
+        .fov = &mainCamera.fov,
 
-        glUseProgram(shaderProgram);
-        glUniform1i(GLUniformPositions::texture0Sampler, 0);
-        glUniform1i(GLUniformPositions::texture1Sampler, 1);
-    }
+        .mainObjectPosition = &mainObjectData.position,
+        .mainObjectRotation = &mainObjectData.rotation,
+        .mainObjectScale = &mainObjectData.scale,
+        .vertexColors = &mainObjectData.vertexColors,
+        .mixWeight = &mainObjectData.mixWeight,
+
+        .isWireframe = 0 
+    };
+
+    gui::init(guiVars);
 
     while (1) {
-        /**
-         * CLEAR
-         */
-        {
-            glClearColor(ImVars::framebufferClearColor.x, ImVars::framebufferClearColor.y,
-                         ImVars::framebufferClearColor.z, ImVars::framebufferClearColor.w);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        }
-
         /**
          * OPENGL RENDER
          */
         {
-            //glEnable(GL_DEPTH_TEST);
+            glClearColor(mainCamera.framebufferClearColor[0], mainCamera.framebufferClearColor[1],
+                         mainCamera.framebufferClearColor[2], mainCamera.framebufferClearColor[3]);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glEnable(GL_DEPTH_TEST);
 
-            if(ImVars::isWireframe) {
+            if(guiVars.isWireframe) {
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             }
             else {
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             }
 
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, texture);
-
-            glUseProgram(shaderProgram);
-
-            GLfloat copyBuffer[4][4];
-            for (size_t i = 0; i < 4; i++) {
-                copyBuffer[i][0] = ImVars::vertexColors[i].x;
-                copyBuffer[i][1] = ImVars::vertexColors[i].y;
-                copyBuffer[i][2] = ImVars::vertexColors[i].z;
-                copyBuffer[i][3] = ImVars::vertexColors[i].w;
-            }
-            glUniform4fv(GLUniformPositions::vertexColors, 4, (GLfloat *)copyBuffer);
-
-            glUniform1f(GLUniformPositions::mixWeight, ImVars::mixWeight);
-
-            modelMatrix = glm::translate(glm::mat4(1.f), glm::vec3(ImVars::position[0], ImVars::position[1], ImVars::position[2]));
-            modelMatrix = glm::rotate(modelMatrix, glm::radians((float)ImVars::rotation[0]), glm::vec3(1.f, 0.f, 0.f));
-            modelMatrix = glm::rotate(modelMatrix, glm::radians((float)ImVars::rotation[1]), glm::vec3(0.f, 1.f, 0.f));
-            modelMatrix = glm::rotate(modelMatrix, glm::radians((float)ImVars::rotation[2]), glm::vec3(0.f, 0.f, 1.f));
-            modelMatrix = glm::scale(modelMatrix, glm::vec3(ImVars::scale[0], ImVars::scale[1], ImVars::scale[2]));
-            glUniformMatrix4fv(GLUniformPositions::modelMatrix, 1, GL_FALSE, glm::value_ptr(modelMatrix));
-
-            camera::rebuildViewMatrix();
-            glUniformMatrix4fv(GLUniformPositions::viewMatrix, 1, GL_FALSE, glm::value_ptr(camera::viewMatrix));
-
-            camera::rebuildProjectionMatrix();
-            glUniformMatrix4fv(GLUniformPositions::projectionMatrix, 1, GL_FALSE, glm::value_ptr(camera::projectionMatrix));
-
-            glBindVertexArray(VAO);
-
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void *)0);
-        }
-
-
-        /**
-         * IMGUI RENDER
-         */
-        {
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
+            glm::mat4 viewMatrix = camera::buildViewMatrix(mainCamera);
+            glm::mat4 projectionMatrix = camera::buildProjectionMatrix(mainCamera);
+            
             {
-                ImGui::Begin("rov-sim-env GUI", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, texture);
 
-                ImGui::SeparatorText("CAMERA");
-                ImGui::SliderFloat("FOV", &ImVars::fov, 30.f, 90.f);
+                glUseProgram(program.id);
+                {
+                    glUniform4fv(program.uniforms["vertexColors"], 4, (GLfloat *)guiVars.vertexColors);
+                    glUniform1f(program.uniforms["mixWeight"], mainObjectData.mixWeight);
+                    glUniformMatrix4fv(program.uniforms["viewMatrix"], 1, GL_FALSE, glm::value_ptr(viewMatrix));
+                    glUniformMatrix4fv(program.uniforms["projectionMatrix"], 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
-                ImGui::SeparatorText("TRANSFORM");
-                ImGui::SliderFloat3("Translate", ImVars::position, -10.f, 10.f);
-                ImGui::SliderFloat3("Scale", ImVars::scale, 0.01f, 10.f);
-                ImGui::SliderFloat3("Rotate", ImVars::rotation, 180.f, -180.f);
-
-                ImGui::SeparatorText("COLOR");
-                ImGui::ColorEdit3("Clear", (float *)&ImVars::framebufferClearColor);
-                for (size_t i = 0; i < 4; i++) {
-                    char colorSliderText[50];
-                    sprintf(colorSliderText, "Vertex %d", (int)i);
-                    ImGui::ColorEdit3(colorSliderText, (float *)&ImVars::vertexColors[i]);
+                    glm::mat4 modelMatrix = math::buildModelMatrix(mainObjectData.position, 
+                                                                   mainObjectData.rotation, 
+                                                                   mainObjectData.scale);
+                    glUniformMatrix4fv(program.uniforms["modelMatrix"], 1, GL_FALSE, glm::value_ptr(modelMatrix));
                 }
-                ImGui::SliderFloat("Mix Weight", &ImVars::mixWeight, 0.f, 1.f);
 
+                glBindVertexArray(VAO);
 
-                ImGui::SeparatorText("DEBUG");
-                ImGui::Checkbox("Wireframe Toggle", &ImVars::isWireframe);
-
-                ImGui::SeparatorText("PERFORMANCE");
-                ImGui::Text("Application average %.3f ms/f rame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-                ImGui::End();
+                glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (void *)0);
             }
-            ImGui::Render();
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         }
+
+        gui::render(guiVars);
 
         /**
          * SWAP BUFFERS, POLL EVENTS

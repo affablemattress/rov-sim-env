@@ -28,7 +28,6 @@ namespace callbackGLFW {
 
         window::framebufferWidth = framebufferWidth;
         window::framebufferHeight = framebufferHeight;
-        camera::projectionMatrix = glm::perspective(glm::radians(camera::fov), (float)window::framebufferWidth / window::framebufferHeight, 0.1f, 100.0f);
     }
 
     void keyAction(GLFWwindow* window, int key, int scancode, int action, int mods) {

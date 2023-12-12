@@ -5,12 +5,14 @@
 #include "glm/glm.hpp"
 
 namespace camera {
-    extern glm::vec3 cameraPosition;
-    extern float fov;
+    struct object {
+        float framebufferClearColor[4];
+        glm::vec3 position;
+        float fov;
+        int16_t framebufferWidth;
+        int16_t framebufferHeight;
+    };
 
-    extern glm::mat4 viewMatrix;
-    extern glm::mat4 projectionMatrix;
-
-    void rebuildViewMatrix();
-    void rebuildProjectionMatrix();
+    glm::mat4 buildViewMatrix(const camera::object& camera);
+    glm::mat4 buildProjectionMatrix(const camera::object& camera);
 }
