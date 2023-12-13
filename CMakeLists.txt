@@ -59,7 +59,8 @@ project(cmake-boilerplate)
         src/camera.cpp 
         src/window.cpp 
         src/gui.cpp 
-        src/math.cpp)
+        src/math.cpp
+        src/object.cpp)
 
     target_link_libraries(main glad glfw spdlog imgui)
 
