@@ -24,7 +24,8 @@ namespace window {
     void configureWindowAndSetContext(GLFWwindow* window, int16_t minimumWidth, int16_t minimumHeight) {
         glfwSetWindowPos(window, 100, 100);
         glfwSetWindowSizeLimits(window, minimumWidth, minimumHeight, GLFW_DONT_CARE, GLFW_DONT_CARE);
-
+        if (glfwRawMouseMotionSupported())
+            glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
         glfwMakeContextCurrent(window);
         glfwSwapInterval(1);
     }

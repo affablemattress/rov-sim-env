@@ -11,7 +11,7 @@ namespace callbackGLFW {
     void setWindowCallbacks(GLFWwindow* window);
 
     /**
-     * @brief Logs GLFW errors.
+     *  @brief Logs GLFW errors.
      * 
      * @param description error description, c-string
      */
@@ -24,11 +24,9 @@ namespace callbackGLFW {
      */
     void windowResize(GLFWwindow* window, int width, int height);
 
-    /**
-     * @brief Called by GLFW on key events. 
-     * @param window window of event
-     * @param key key associated with the event
-     * @param action event description
-     */
     void keyAction(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+    void cursor(GLFWwindow* window, double xPos, double yPos);
+
+    void scroll(GLFWwindow* window, double xOffset, double yOffset);
 }

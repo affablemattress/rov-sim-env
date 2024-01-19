@@ -22,7 +22,7 @@ namespace lifetime {
     extern void initSTBI();
     extern void initGLAD();
     extern void killIMGUI();
-    
+
     /**
      * @brief Kills all. Logs event with GLFW timestamp.
      * 

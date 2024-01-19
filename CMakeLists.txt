@@ -52,15 +52,17 @@ project(cmake-boilerplate)
 
 #main.out
     add_executable(main 
-        src/main.cpp 
-        src/callbackGLFW.cpp 
-        src/lifetime.cpp 
-        src/shader.cpp 
-        src/camera.cpp 
-        src/window.cpp 
-        src/gui.cpp 
-        src/math.cpp
-        src/object.cpp)
+    src/gameobjects/object.cpp
+    src/gameobjects/camera.cpp
+    src/render/shader.cpp 
+    src/glfw/callbackGLFW.cpp 
+    src/glfw/window.cpp
+    src/systems/gui.cpp
+    src/systems/input.cpp
+    src/lifetime.cpp 
+    src/math.cpp
+    src/main.cpp 
+    )
 
     target_link_libraries(main glad glfw spdlog imgui)
 

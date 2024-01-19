@@ -28,6 +28,8 @@ namespace gui {
             if(ImGui::TreeNode("CAMERA")) {
                 ImGui::ColorEdit3("Clear",*vars.framebufferClearColor);
                 ImGui::SliderFloat("FOV", vars.fov, 30.f, 90.f);
+                ImGui::SliderFloat("Camera X", vars.cameraX, -180.f, 180.f);
+                ImGui::SliderFloat("Camera Y", vars.cameraY, -180.f, 180.f);
                 ImGui::TreePop();
             }
 

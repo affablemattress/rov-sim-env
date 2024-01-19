@@ -6,6 +6,7 @@
 #include "gui.hpp"
 #include "math.hpp"
 #include "object.hpp"
+#include "input.hpp"
 
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
@@ -16,6 +17,16 @@
 
 #include <stdlib.h>
 #include <time.h>
+
+struct globalData {
+    int mouseEnabled;
+    double mouseSensitivity;
+};
+
+globalData instanceData = {
+    .mouseEnabled = 1,
+    .mouseSensitivity = 0.5
+};
 
 int main(int argc, char **args) {
     srand(time(NULL));
@@ -42,10 +53,7 @@ int main(int argc, char **args) {
      * INIT SCENE
      */
     callbackGLFW::windowResize(window, 0, 0); // Call resize callback to set window vars & projection matrix...
-
-    /**
-     * SETUP THE SHADER, GET UNIFORM LOCATIONS
-     */    
+ 
     const GLfloat cubeVertices[] = {
         -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
@@ -109,52 +117,53 @@ int main(int argc, char **args) {
 
     shader::program mainProgram;
     mainProgram.id = glCreateProgram();
-
     {
-        shader::compileProgram(&mainProgram, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
+        {
+            shader::compileProgram(&mainProgram, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
 
-        const GLchar* programUniforms[7] = { "vertexColors", "modelMatrix", "viewMatrix", "projectionMatrix", "mixWeight", "texture0", "texture1"};
-        shader::pushUniforms(&mainProgram, 7, programUniforms);
+            const GLchar* programUniforms[7] = { "vertexColors", "modelMatrix", "viewMatrix", "projectionMatrix", "mixWeight", "texture0", "texture1"};
+            shader::pushUniforms(&mainProgram, 7, programUniforms);
 
-        glUseProgram(mainProgram.id);
-        glUniform1i(mainProgram.uniforms["texture0"], 0);
-        glUniform1i(mainProgram.uniforms["texture1"], 1);
-    }
+            glUseProgram(mainProgram.id);
+            glUniform1i(mainProgram.uniforms["texture0"], 0);
+            glUniform1i(mainProgram.uniforms["texture1"], 1);
+        }
 
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, mainVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mainEBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIndices), cubeIndices, GL_STATIC_DRAW);
-    }
-
-    {
-        glBindVertexArray(mainVAO);
         {
             glBindBuffer(GL_ARRAY_BUFFER, mainVBO);
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3*sizeof(float)));
-            glEnableVertexAttribArray(0);
-            glEnableVertexAttribArray(1);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mainEBO);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIndices), cubeIndices, GL_STATIC_DRAW);
         }
-    }
 
-    {
-        GLint textureX, textureY, textureChannels;
-        stbi_uc* textureData = stbi_load(PROJECT_PATH "res/texture/kenney/png/Dark/texture_13.png", &textureX, &textureY, &textureChannels, 3);
+        {
+            glBindVertexArray(mainVAO);
+            {
+                glBindBuffer(GL_ARRAY_BUFFER, mainVBO);
+                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+                glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3*sizeof(float)));
+                glEnableVertexAttribArray(0);
+                glEnableVertexAttribArray(1);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mainEBO);
+            }
+        }
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, mainTexture);
+        {
+            GLint textureX, textureY, textureChannels;
+            stbi_uc* textureData = stbi_load(PROJECT_PATH "res/texture/kenney/png/Dark/texture_13.png", &textureX, &textureY, &textureChannels, 3);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureX, textureY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
-        //stbi_image_free(textureData);
-        glGenerateMipmap(GL_TEXTURE_2D);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, mainTexture);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureX, textureY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
+            //stbi_image_free(textureData);
+            glGenerateMipmap(GL_TEXTURE_2D);
+        }
     }
 
     GLuint batchTexture = 0;
@@ -162,36 +171,38 @@ int main(int argc, char **args) {
 
     shader::program batchProgram;
     batchProgram.id = glCreateProgram();
-    
     {
-        GLint textureX, textureY, textureChannels;
-        stbi_uc* textureData = stbi_load(PROJECT_PATH "res/texture/concrete.png", &textureX, &textureY, &textureChannels, 3);
+        {
+            GLint textureX, textureY, textureChannels;
+            stbi_uc* textureData = stbi_load(PROJECT_PATH "res/texture/concrete.png", &textureX, &textureY, &textureChannels, 3);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, batchTexture);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, batchTexture);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureX, textureY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
-        //stbi_image_free(textureData);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureX, textureY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
+            //stbi_image_free(textureData);
+            glGenerateMipmap(GL_TEXTURE_2D);
+        }
 
-    {
-        shader::compileProgram(&batchProgram, PROJECT_PATH "res/shader/vertexBatch.glsl", PROJECT_PATH "res/shader/fragmentBatch.glsl");
+        {
+            shader::compileProgram(&batchProgram, PROJECT_PATH "res/shader/vertexBatch.glsl", PROJECT_PATH "res/shader/fragmentBatch.glsl");
 
-        const GLchar* programUniforms[6] = { "mixColor", "modelMatrix", "viewMatrix", "projectionMatrix", "mixWeight", "texture0"};
-        shader::pushUniforms(&batchProgram, 6, programUniforms);
+            const GLchar* programUniforms[6] = { "mixColor", "modelMatrix", "viewMatrix", "projectionMatrix", "mixWeight", "texture0"};
+            shader::pushUniforms(&batchProgram, 6, programUniforms);
 
-        glUseProgram(batchProgram.id);
-        glUniform1i(batchProgram.uniforms["texture0"], 0);
+            glUseProgram(batchProgram.id);
+            glUniform1i(batchProgram.uniforms["texture0"], 0);
+        }
     }
 
     camera::object mainCamera = { 
         .framebufferClearColor = { 0.92f, 0.92f, 0.92f, 1.0f },
         .position = { 0.0f, 0.0f, 1.0f },
+        .rotation = { 0.f, 0.f },
         .fov = 75,
         .framebufferWidth = window::framebufferWidth,
         .framebufferHeight = window::framebufferHeight
@@ -213,6 +224,8 @@ int main(int argc, char **args) {
     gui::vars guiVars = {
         .framebufferClearColor = &mainCamera.framebufferClearColor,
         .fov = &mainCamera.fov,
+        .cameraX = &mainCamera.rotation[0],
+        .cameraY = &mainCamera.rotation[1],
 
         .mainCube = &mainCubeData,
 
@@ -222,6 +235,15 @@ int main(int argc, char **args) {
     };
 
     gui::init(guiVars);
+
+    input::references inputData = {
+        .mouseEnabled = &instanceData.mouseEnabled,
+        .mouseSensitivity = &instanceData.mouseSensitivity,
+
+        .cameraX = &mainCamera.rotation.x,
+        .cameraY = &mainCamera.rotation.y
+    };
+    input::registerInput(&inputData);
 
     while (1) {
         /**
@@ -240,6 +262,8 @@ int main(int argc, char **args) {
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             }
 
+            mainCamera.framebufferWidth = window::framebufferWidth;
+            mainCamera.framebufferHeight = window::framebufferHeight;
             glm::mat4 viewMatrix = camera::buildViewMatrix(mainCamera);
             glm::mat4 projectionMatrix = camera::buildProjectionMatrix(mainCamera);
 
@@ -270,7 +294,7 @@ int main(int argc, char **args) {
 
                 glUniformMatrix4fv(batchProgram.uniforms["viewMatrix"], 1, GL_FALSE, glm::value_ptr(viewMatrix));
                 glUniformMatrix4fv(batchProgram.uniforms["projectionMatrix"], 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-                glUniform1f(batchProgram.uniforms["mixWeight"], 0.8f);
+                glUniform1f(batchProgram.uniforms["mixWeight"], 0.9f);
                 for(size_t i = 0; i < batchCubes.size(); i++) {
                     glm::mat4 modelMatrix = math::buildModelMatrix(batchCubes.at(i).position, batchCubes.at(i).rotation, batchCubes.at(i).scale);
                     glUniformMatrix4fv(batchProgram.uniforms["modelMatrix"], 1, GL_FALSE, glm::value_ptr(modelMatrix));
@@ -283,17 +307,13 @@ int main(int argc, char **args) {
 
         gui::render(guiVars);
 
-        /**
-         * SWAP BUFFERS, POLL EVENTS
-         */
+        input::registerInput(&inputData);
+
         {
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
 
-        /**
-         * EXIT?
-         */
         if (glfwWindowShouldClose(window)) {
             break;
         }

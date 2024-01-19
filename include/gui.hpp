@@ -15,6 +15,8 @@ namespace gui {
     struct vars{
         float (*framebufferClearColor)[4];
         float* fov; 
+        float* cameraX;
+        float* cameraY;
 
         object::mainCube* mainCube;
 

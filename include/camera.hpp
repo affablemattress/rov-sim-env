@@ -8,6 +8,7 @@ namespace camera {
     struct object {
         float framebufferClearColor[4];
         glm::vec3 position;
+        glm::vec2 rotation;
         float fov;
         int16_t framebufferWidth;
         int16_t framebufferHeight;
