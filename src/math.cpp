@@ -10,4 +10,9 @@ namespace math {
         returnMatrix = glm::scale(returnMatrix, { scale[0], scale[1], scale[2] });
         return returnMatrix;
     }
+
+    glm::vec3 getDirectionVectorFrom2DEuler(const glm::vec2& euler) {
+        double x = glm::radians(euler.x), y = glm::radians(euler.y);
+        return glm::vec3(cos(y) * cos(x), sin(y), cos(y) * sin(x));
+    }
 }

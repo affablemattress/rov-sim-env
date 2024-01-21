@@ -1,6 +1,6 @@
 #include "shader.hpp"
 
-#include "lifetime.hpp"
+#include "app.hpp"
 
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
@@ -14,7 +14,7 @@ namespace shader {
         FILE* shaderFile = fopen(filepath, "r");
         if(!shaderFile) {
             spdlog::error("Couldn't open file: {0}", filepath);
-            lifetime::killAll(1);
+            app::lifetime::killAll(1);
         }
         GLchar* shaderSource = new GLchar[SHADER_SOURCE_BUFFER_SIZE];
         size_t sourceSize = fread(shaderSource, 1, SHADER_SOURCE_BUFFER_SIZE - 1, shaderFile);
@@ -30,7 +30,7 @@ namespace shader {
         if(!compilationStatus) {
             glGetShaderInfoLog(shader, SHADER_ERROR_BUFFER_SIZE - 1, NULL, compilationInfoLog);
             spdlog::error("GLSL compilation error.\n   >GLSL error description start\n\n{0}\n   >GLSL error description end", compilationInfoLog);
-            lifetime::killAll(1);
+            app::lifetime::killAll(1);
         }
 
         fclose(shaderFile);
@@ -40,7 +40,7 @@ namespace shader {
         return shader;
     }
 
-    void compileProgram(shader::program* program, const char* vertexShaderPath, const char* fragmentShaderPath) {
+    void compileProgram(shader::Program* program, const char* vertexShaderPath, const char* fragmentShaderPath) {
         GLuint vertexShader = compileShaderFromPath(vertexShaderPath, GL_VERTEX_SHADER);
         glAttachShader(program->id, vertexShader);
 
@@ -50,11 +50,11 @@ namespace shader {
         glLinkProgram(program->id);
     }
 
-    void pushUniform(shader::program* program, const GLchar* uniformName) {
+    void pushUniform(shader::Program* program, const GLchar* uniformName) {
         program->uniforms[uniformName] = glGetUniformLocation(program->id, uniformName);
     }
 
-    void pushUniforms(shader::program* program, size_t sizeOfNames, const GLchar** uniformNamesArray) {
+    void pushUniforms(shader::Program* program, size_t sizeOfNames, const GLchar** uniformNamesArray) {
         for (size_t i = 0; i < sizeOfNames; i++){
             pushUniform(program, uniformNamesArray[i]);
         }

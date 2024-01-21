@@ -12,13 +12,13 @@
 #define SHADER_ERROR_BUFFER_SIZE 512
 
 namespace shader {
-    struct program {
+    struct Program {
         GLuint id;
         std::unordered_map<std::string, GLint> uniforms;
     };
 
-    void compileProgram(shader::program* program, const char* vertexShaderPath, const char* fragmentShaderPath);
+    void compileProgram(shader::Program* program, const char* vertexShaderPath, const char* fragmentShaderPath);
 
-    void pushUniform(shader::program* program, const GLchar* uniformName);
-    void pushUniforms(shader::program* program, size_t sizeOfNames, const GLchar** uniformNamesArray);
+    void pushUniform(shader::Program* program, const GLchar* uniformName);
+    void pushUniforms(shader::Program* program, size_t sizeOfNames, const GLchar** uniformNamesArray);
 }

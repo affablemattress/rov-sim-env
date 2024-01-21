@@ -59,7 +59,7 @@ project(cmake-boilerplate)
     src/glfw/window.cpp
     src/systems/gui.cpp
     src/systems/input.cpp
-    src/lifetime.cpp 
+    src/app.cpp 
     src/math.cpp
     src/main.cpp 
     )

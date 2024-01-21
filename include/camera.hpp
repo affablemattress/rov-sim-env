@@ -5,7 +5,7 @@
 #include "glm/glm.hpp"
 
 namespace camera {
-    struct object {
+    struct Object {
         float framebufferClearColor[4];
         glm::vec3 position;
         glm::vec2 rotation;
@@ -14,6 +14,6 @@ namespace camera {
         int16_t framebufferHeight;
     };
 
-    glm::mat4 buildViewMatrix(const camera::object& camera);
-    glm::mat4 buildProjectionMatrix(const camera::object& camera);
+    glm::mat4 buildViewMatrix(const camera::Object& camera);
+    glm::mat4 buildProjectionMatrix(const camera::Object& camera);
 }

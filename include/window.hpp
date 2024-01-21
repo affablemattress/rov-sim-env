@@ -8,9 +8,6 @@
 #include <string>
 
 namespace window {
-    extern int16_t framebufferWidth;
-    extern int16_t framebufferHeight;
-
     GLFWwindow *createWindow(int windowWidth, int windowHeight, std::string_view windowTitle);
     void configureWindowAndSetContext(GLFWwindow* window, int16_t minimumWidth, int16_t minimumHeight);
 }

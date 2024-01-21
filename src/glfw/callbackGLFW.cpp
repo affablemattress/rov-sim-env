@@ -1,6 +1,7 @@
 #include "callbackGLFW.hpp"
 
-#include "lifetime.hpp"
+#include "app.hpp"
+
 #include "window.hpp"
 #include "camera.hpp"
 #include "input.hpp"
@@ -21,7 +22,7 @@ namespace callbackGLFW {
     
     void error(int error, const char* description) {
         spdlog::error("GLFW error.\n   >GLFW description start\n\n{0}\n\n   >GLFW description end", description);
-        lifetime::killAll(1);
+        app::lifetime::killAll(1);
     }
 
     void windowResize(GLFWwindow* window, int width, int height) {
@@ -29,8 +30,8 @@ namespace callbackGLFW {
         glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
         glViewport(0, 0, framebufferWidth, framebufferHeight);
 
-        window::framebufferWidth = framebufferWidth;
-        window::framebufferHeight = framebufferHeight;
+        app::window_vars.framebufferWidth = framebufferWidth;
+        app::window_vars.framebufferHeight = framebufferHeight;
     }
 
     void keyAction(GLFWwindow* window, int key, int scancode, int action, int mods) {

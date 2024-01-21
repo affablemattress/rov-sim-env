@@ -1,4 +1,4 @@
-#include "lifetime.hpp"
+#include "app.hpp"
 #include "callbackGLFW.hpp"
 #include "shader.hpp"
 #include "window.hpp"
@@ -18,41 +18,24 @@
 #include <stdlib.h>
 #include <time.h>
 
-struct globalData {
-    int mouseEnabled;
-    double mouseSensitivity;
-};
-
-globalData instanceData = {
-    .mouseEnabled = 1,
-    .mouseSensitivity = 0.5
-};
-
 int main(int argc, char **args) {
-    srand(time(NULL));
+    app::lifetime::startApp();
 
-    lifetime::initSPDLOG(spdlog::level::level_enum::info, "Started rov-sim-env...");
-    lifetime::initSTBI();
-    lifetime::initGLFW(callbackGLFW::error, "GLFW init.");
-    glfwSetErrorCallback((GLFWerrorfun)&callbackGLFW::error);
+    app::lifetime::initSPDLOG(spdlog::level::level_enum::info, "Started rov-sim-env...");
+    app::lifetime::initSTBI();
+    app::lifetime::initGLFW(callbackGLFW::error, "GLFW init.");
 
-    /**
-     * CREATE WINDOW & CONTEXT, THEN CONFIGURE
-     */
-    GLFWwindow* window = window::createWindow(800, 600, "rov-sim-env");
-    window::configureWindowAndSetContext(window, 800, 600);
+    GLFWwindow* window = window::createWindow(app::settings.defaultWindowWidth, app::settings.defaultWindowHeight, "rov-sim-env");
+    window::configureWindowAndSetContext(window, app::settings.defaultWindowWidth, app::settings.defaultWindowHeight);
     callbackGLFW::setWindowCallbacks(window);
 
-    /**
-     * LOAD GL, FRAMEBUFFER SETUP
-     */
-    lifetime::initGLAD();
-    lifetime::initIMGUI(window);
+    app::lifetime::initGLAD();
+    app::lifetime::initIMGUI(window);
 
     /**
      * INIT SCENE
      */
-    callbackGLFW::windowResize(window, 0, 0); // Call resize callback to set window vars & projection matrix...
+    callbackGLFW::windowResize(window, 0, 0); // Call resize callback to set window vars
  
     const GLfloat cubeVertices[] = {
         -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -115,7 +98,7 @@ int main(int argc, char **args) {
     GLuint mainTexture = 0;
     glGenTextures(1, &mainTexture);
 
-    shader::program mainProgram;
+    shader::Program mainProgram;
     mainProgram.id = glCreateProgram();
     {
         {
@@ -158,7 +141,7 @@ int main(int argc, char **args) {
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureX, textureY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
             //stbi_image_free(textureData);
@@ -169,7 +152,7 @@ int main(int argc, char **args) {
     GLuint batchTexture = 0;
     glGenTextures(1, &batchTexture);
 
-    shader::program batchProgram;
+    shader::Program batchProgram;
     batchProgram.id = glCreateProgram();
     {
         {
@@ -199,16 +182,16 @@ int main(int argc, char **args) {
         }
     }
 
-    camera::object mainCamera = { 
+    camera::Object mainCamera = { 
         .framebufferClearColor = { 0.92f, 0.92f, 0.92f, 1.0f },
         .position = { 0.0f, 0.0f, 1.0f },
-        .rotation = { 0.f, 0.f },
+        .rotation = { -90.f, 0.f },
         .fov = 75,
-        .framebufferWidth = window::framebufferWidth,
-        .framebufferHeight = window::framebufferHeight
+        .framebufferWidth = app::window_vars.framebufferWidth,
+        .framebufferHeight = app::window_vars.framebufferHeight
     };
 
-    object::mainCube mainCubeData = {
+    object::MainCube mainCubeData = {
         .position = {0.f, 0.f, 0.f},
         .rotation = { -45.f, -45.f, -45.f},
         .scale = { 1.f, 1.f, 1.f },
@@ -218,34 +201,42 @@ int main(int argc, char **args) {
                           { 1.0f, 0.2f, 0.5f, 1.0f } },
         .mixWeight = 0.6f
     };
+    mainCubeData.position[0] = 2.f - ((rand() % 401) / 100.f);
+    mainCubeData.position[1] = 2.f - ((rand() % 401) / 100.f);
+    mainCubeData.position[2] = -3.f - ((rand() % 401) / 100.f);
+    mainCubeData.rotation[0] = 180.f - ((rand() % 3601) / 10.f);
+    mainCubeData.rotation[1] = 180.f - ((rand() % 3601) / 10.f);
+    mainCubeData.rotation[2] = 180.f - ((rand() % 3601) / 10.f);
+    mainCubeData.scale[0] = 4.f - ((rand() % 201) / 100.f);
+    mainCubeData.scale[1] = 4.f - ((rand() % 201) / 100.f);
+    mainCubeData.scale[2] = 4.f - ((rand() % 201) / 100.f);
 
-    std::vector<object::batchCube> batchCubes;
+    std::vector<object::BatchCube> batchCubes;
 
-    gui::vars guiVars = {
-        .framebufferClearColor = &mainCamera.framebufferClearColor,
-        .fov = &mainCamera.fov,
-        .cameraX = &mainCamera.rotation[0],
-        .cameraY = &mainCamera.rotation[1],
-
+    gui::References guiRefs = {
+        .camera = &mainCamera,
         .mainCube = &mainCubeData,
-
         .batchCubes = &batchCubes,
-
-        .isWireframe = 0 
     };
+    gui::registerRefs(&guiRefs);
 
-    gui::init(guiVars);
-
-    input::references inputData = {
-        .mouseEnabled = &instanceData.mouseEnabled,
-        .mouseSensitivity = &instanceData.mouseSensitivity,
-
-        .cameraX = &mainCamera.rotation.x,
-        .cameraY = &mainCamera.rotation.y
+    input::References inputRefs = {
+        .camera = &mainCamera,
     };
-    input::registerInput(&inputData);
+    input::registerRefs(&inputRefs);
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
+    if (glfwRawMouseMotionSupported())
+        glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
+    double prevFrameTime = 0.;
+    double currentFrameTime = 0.;
     while (1) {
+        currentFrameTime = glfwGetTime();
+        app::window_vars.frametime = currentFrameTime - prevFrameTime;
+        prevFrameTime = currentFrameTime;
+
+        glfwPollEvents();
+
         /**
          * OPENGL RENDER
          */
@@ -255,32 +246,32 @@ int main(int argc, char **args) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glEnable(GL_DEPTH_TEST);
 
-            if(guiVars.isWireframe) {
+            if(app::state_vars.isWireframe) {
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             }
             else {
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             }
 
-            mainCamera.framebufferWidth = window::framebufferWidth;
-            mainCamera.framebufferHeight = window::framebufferHeight;
+            mainCamera.framebufferWidth = app::window_vars.framebufferWidth;
+            mainCamera.framebufferHeight = app::window_vars.framebufferHeight;
             glm::mat4 viewMatrix = camera::buildViewMatrix(mainCamera);
             glm::mat4 projectionMatrix = camera::buildProjectionMatrix(mainCamera);
 
             glUseProgram(mainProgram.id);
             {
-                glBindVertexArray(mainVAO);
+                glUniformMatrix4fv(mainProgram.uniforms["viewMatrix"], 1, GL_FALSE, glm::value_ptr(viewMatrix));
+                glUniformMatrix4fv(mainProgram.uniforms["projectionMatrix"], 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, mainTexture);
 
+                glBindVertexArray(mainVAO);
                 glm::mat4 modelMatrix = math::buildModelMatrix(mainCubeData.position, mainCubeData.rotation, mainCubeData.scale);
-
-                glUniform4fv(mainProgram.uniforms["vertexColors"], 4, (GLfloat *)mainCubeData.vertexColors);
-                glUniform1f(mainProgram.uniforms["mixWeight"], mainCubeData.mixWeight);
-                glUniformMatrix4fv(mainProgram.uniforms["viewMatrix"], 1, GL_FALSE, glm::value_ptr(viewMatrix));
-                glUniformMatrix4fv(mainProgram.uniforms["projectionMatrix"], 1, GL_FALSE, glm::value_ptr(projectionMatrix));
                 glUniformMatrix4fv(mainProgram.uniforms["modelMatrix"], 1, GL_FALSE, glm::value_ptr(modelMatrix));
+ 
+                glUniform1f(mainProgram.uniforms["mixWeight"], mainCubeData.mixWeight);
+                glUniform4fv(mainProgram.uniforms["vertexColors"], 4, (GLfloat *)mainCubeData.vertexColors);
 
                 glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (void *)0);
             }
@@ -305,23 +296,16 @@ int main(int argc, char **args) {
             }
         }
 
-        gui::render(guiVars);
+        gui::render();
 
-        input::registerInput(&inputData);
-
-        {
-            glfwSwapBuffers(window);
-            glfwPollEvents();
-        }
+        glfwSwapBuffers(window);
 
         if (glfwWindowShouldClose(window)) {
             break;
         }
     }
 
-    /**
-     * DESTROY IMGUI, (WINDOW & CONTEXT &) GLFW. THEN TERMINATE
-     */
-    lifetime::killAll(0);
+    app::lifetime::killAll(0);
+    app::lifetime::endApp();
     exit(EXIT_SUCCESS);
 }

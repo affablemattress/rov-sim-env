@@ -4,8 +4,8 @@
 #include <time.h>
 
 namespace object {
-    object::batchCube generateRandomBatchCube(float positionZOffset, float positionRange, float scaleOffset, float scaleRange) {
-        object::batchCube returnCube = { 0 };
+    object::BatchCube generateRandomBatchCube(float positionZOffset, float positionRange, float scaleOffset, float scaleRange) {
+        object::BatchCube returnCube = { 0 };
 
         returnCube.mixColor[0] = 1.f - (rand() % (100 + 1) / 100.f);
         returnCube.mixColor[1] = 1.f - (rand() % (100 + 1) / 100.f);

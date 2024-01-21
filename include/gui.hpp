@@ -3,6 +3,7 @@
 #include "config.hpp"
 
 #include "object.hpp"
+#include "camera.hpp"
 
 #include "glad/glad.h"
 #include "imgui.h"
@@ -12,19 +13,14 @@
 
 
 namespace gui {
-    struct vars{
-        float (*framebufferClearColor)[4];
-        float* fov; 
-        float* cameraX;
-        float* cameraY;
+    struct References{
+        camera::Object* camera;
 
-        object::mainCube* mainCube;
+        object::MainCube* mainCube;
 
-        std::vector<object::batchCube>* batchCubes;
-
-        bool isWireframe;
+        std::vector<object::BatchCube>* batchCubes;
     };
 
-    void init(gui::vars& vars);
-    void render(gui::vars& vars);
+    extern void registerRefs(gui::References* refs);
+    extern void render();
 }

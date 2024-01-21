@@ -1,14 +1,11 @@
 #include "window.hpp"
 
-#include "lifetime.hpp"
+#include "app.hpp"
 
 #include "spdlog/spdlog.h"
 #include "GLFW/glfw3.h"
 
 namespace window {
-    int16_t framebufferWidth;
-    int16_t framebufferHeight;
-
     GLFWwindow* createWindow(int windowWidth, int windowHeight, std::string_view windowTitle) {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -16,7 +13,7 @@ namespace window {
         GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, windowTitle.data(), NULL, NULL);
         if (window == NULL) {
             spdlog::error("GLFW couldn't create window.");
-            lifetime::killAll(1);
+            app::lifetime::killAll(1);
         }
         return window;
     }
@@ -24,8 +21,6 @@ namespace window {
     void configureWindowAndSetContext(GLFWwindow* window, int16_t minimumWidth, int16_t minimumHeight) {
         glfwSetWindowPos(window, 100, 100);
         glfwSetWindowSizeLimits(window, minimumWidth, minimumHeight, GLFW_DONT_CARE, GLFW_DONT_CARE);
-        if (glfwRawMouseMotionSupported())
-            glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
         glfwMakeContextCurrent(window);
         glfwSwapInterval(1);
     }
