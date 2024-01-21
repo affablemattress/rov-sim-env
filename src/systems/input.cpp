@@ -11,6 +11,27 @@ namespace input {
         input::refs = refs;
     }
 
+    void processKeysAsync(GLFWwindow* window) {
+        if(!(app::state_vars.isMouseEnabled)) {
+            if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+                glm::vec3 direction = math::getDirectionVectorFrom2DEuler(refs->camera->rotation);
+                refs->camera->position += direction * (float)(app::settings.movementSpeed * app::window_vars.frametime);
+            }
+            if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+                glm::vec3 direction = math::getDirectionVectorFrom2DEuler(refs->camera->rotation);
+                refs->camera->position -= direction * (float)(app::settings.movementSpeed * app::window_vars.frametime);
+            }
+            if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+                glm::vec3 direction = math::getDirectionVectorFrom2DEuler(refs->camera->rotation);
+                refs->camera->position += glm::normalize(glm::cross(direction, { 0., 1., 0. })) * (float)(app::settings.movementSpeed * app::window_vars.frametime);
+            }
+            if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+                glm::vec3 direction = math::getDirectionVectorFrom2DEuler(refs->camera->rotation);
+                refs->camera->position -= glm::normalize(glm::cross(direction, { 0., 1., 0. })) * (float)(app::settings.movementSpeed * app::window_vars.frametime);
+            }
+        }
+    }
+
     void processKey(GLFWwindow* window, int key, int scancode, int action, int mods) {
         switch (key) {
             case GLFW_KEY_ESCAPE:
@@ -28,12 +49,6 @@ namespace input {
                         app::state_vars.isMouseEnabled = 1;
                     }
                 break;
-            case GLFW_KEY_W:
-                if(!(app::state_vars.isMouseEnabled)) {
-                    glm::vec3 direction = math::getDirectionVectorFrom2DEuler(refs->camera->rotation);
-                    refs->camera->position += direction * (float)(app::settings.movementSpeed * app::window_vars.frametime);
-                }
-
             default:
                 0;
         }

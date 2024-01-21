@@ -236,6 +236,7 @@ int main(int argc, char **args) {
         prevFrameTime = currentFrameTime;
 
         glfwPollEvents();
+        input::processKeysAsync(window);
 
         /**
          * OPENGL RENDER

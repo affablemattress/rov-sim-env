@@ -12,6 +12,8 @@ namespace input {
 
     void registerRefs(input::References* refs);
 
+    void processKeysAsync(GLFWwindow* window);
+    
     void processKey(GLFWwindow* window, int key, int scancode, int action, int mods);
     void processCursor(GLFWwindow* window, double xPos, double yPos);
     void processScroll(GLFWwindow* window, double xOffset, double yOffset);
