@@ -17,8 +17,13 @@ namespace shader {
         std::unordered_map<std::string, GLint> uniforms;
     };
 
-    void compileProgram(shader::Program* program, const char* vertexShaderPath, const char* fragmentShaderPath);
+    void compileProgram(shader::Program& program, const char* vertexShaderPath, const char* fragmentShaderPath);
 
-    void pushUniform(shader::Program* program, const GLchar* uniformName);
-    void pushUniforms(shader::Program* program, size_t sizeOfNames, const GLchar** uniformNamesArray);
+    void pushUniform(shader::Program& program, const GLchar* uniformName);
+    void pushUniforms(shader::Program& program, size_t sizeOfNames, const GLchar** uniformNamesArray);
+
+    template <typename F, typename... V>
+    void setUniform(shader::Program& program, F glUniformFunction, const GLchar* uniformName, V... args) {
+        glUniformFunction(program.uniforms[uniformName], args...);
+    }
 }

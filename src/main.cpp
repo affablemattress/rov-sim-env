@@ -102,14 +102,14 @@ int main(int argc, char **args) {
     mainProgram.id = glCreateProgram();
     {
         {
-            shader::compileProgram(&mainProgram, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
+            shader::compileProgram(mainProgram, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
 
             const GLchar* programUniforms[7] = { "vertexColors", "modelMatrix", "viewMatrix", "projectionMatrix", "mixWeight", "texture0", "texture1"};
-            shader::pushUniforms(&mainProgram, 7, programUniforms);
+            shader::pushUniforms(mainProgram, 7, programUniforms);
 
             glUseProgram(mainProgram.id);
-            glUniform1i(mainProgram.uniforms["texture0"], 0);
-            glUniform1i(mainProgram.uniforms["texture1"], 1);
+            shader::setUniform(mainProgram, glUniform1i, "texture0", 0);
+            shader::setUniform(mainProgram, glUniform1i, "texture1", 1);
         }
 
         {
@@ -172,13 +172,13 @@ int main(int argc, char **args) {
         }
 
         {
-            shader::compileProgram(&batchProgram, PROJECT_PATH "res/shader/vertexBatch.glsl", PROJECT_PATH "res/shader/fragmentBatch.glsl");
+            shader::compileProgram(batchProgram, PROJECT_PATH "res/shader/vertexBatch.glsl", PROJECT_PATH "res/shader/fragmentBatch.glsl");
 
             const GLchar* programUniforms[6] = { "mixColor", "modelMatrix", "viewMatrix", "projectionMatrix", "mixWeight", "texture0"};
-            shader::pushUniforms(&batchProgram, 6, programUniforms);
+            shader::pushUniforms(batchProgram, 6, programUniforms);
 
             glUseProgram(batchProgram.id);
-            glUniform1i(batchProgram.uniforms["texture0"], 0);
+            shader::setUniform(batchProgram, glUniform1i, "texture0", 0);
         }
     }
 

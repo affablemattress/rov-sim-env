@@ -40,21 +40,21 @@ namespace shader {
         return shader;
     }
 
-    void compileProgram(shader::Program* program, const char* vertexShaderPath, const char* fragmentShaderPath) {
+    void compileProgram(shader::Program& program, const char* vertexShaderPath, const char* fragmentShaderPath) {
         GLuint vertexShader = compileShaderFromPath(vertexShaderPath, GL_VERTEX_SHADER);
-        glAttachShader(program->id, vertexShader);
+        glAttachShader(program.id, vertexShader);
 
         GLuint fragmentShader = compileShaderFromPath(fragmentShaderPath, GL_FRAGMENT_SHADER);
-        glAttachShader(program->id, fragmentShader);
+        glAttachShader(program.id, fragmentShader);
 
-        glLinkProgram(program->id);
+        glLinkProgram(program.id);
     }
 
-    void pushUniform(shader::Program* program, const GLchar* uniformName) {
-        program->uniforms[uniformName] = glGetUniformLocation(program->id, uniformName);
+    void pushUniform(shader::Program& program, const GLchar* uniformName) {
+        program.uniforms[uniformName] = glGetUniformLocation(program.id, uniformName);
     }
 
-    void pushUniforms(shader::Program* program, size_t sizeOfNames, const GLchar** uniformNamesArray) {
+    void pushUniforms(shader::Program& program, size_t sizeOfNames, const GLchar** uniformNamesArray) {
         for (size_t i = 0; i < sizeOfNames; i++){
             pushUniform(program, uniformNamesArray[i]);
         }
