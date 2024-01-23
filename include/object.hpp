@@ -7,8 +7,6 @@ namespace object {
         float position[3];
         float rotation[3];
         float scale[3];
-        float vertexColors[4][4];
-        float mixWeight;
     };
 
     struct BatchCube {

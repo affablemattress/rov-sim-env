@@ -11,8 +11,13 @@ namespace math {
         return returnMatrix;
     }
 
+    glm::mat3 buildNormalMatrixFromModelMatrix(const glm::mat4& modelMatrix) {
+        return glm::mat3(glm::transpose(glm::inverse(modelMatrix)));
+    }
+
     glm::vec3 getDirectionVectorFrom2DEuler(const glm::vec2& euler) {
         double x = glm::radians(euler.x), y = glm::radians(euler.y);
-        return glm::vec3(cos(y) * cos(x), sin(y), cos(y) * sin(x));
+        return glm::vec3(cos(y) * cos(x), sin(y), -cos(y) * sin(x));
     }
+
 }

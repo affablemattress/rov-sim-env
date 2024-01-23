@@ -34,15 +34,6 @@ namespace gui {
                 ImGui::SliderFloat3("Translate", refs->mainCube->position, -10.f, 10.f);
                 ImGui::SliderFloat3("Scale", refs->mainCube->scale, 0.01f, 10.f);
                 ImGui::SliderFloat3("Rotate", refs->mainCube->rotation, 180.f, -180.f);
-
-                ImGui::SeparatorText("Color");
-                for (size_t i = 0; i < 4; i++) {
-                    char colorSliderText[50];
-                    sprintf(colorSliderText, "Vertex %d", (int)i);
-                    ImGui::ColorEdit3(colorSliderText, refs->mainCube->vertexColors[i]);
-                }
-                ImGui::SliderFloat("Mix Weight", &refs->mainCube->mixWeight, 0.f, 1.f);
-                ImGui::TreePop();
             }
 
             if(ImGui::TreeNode("BATCH")) {

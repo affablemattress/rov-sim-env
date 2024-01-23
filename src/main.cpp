@@ -36,54 +36,75 @@ int main(int argc, char **args) {
      * INIT SCENE
      */
     callbackGLFW::windowResize(window, 0, 0); // Call resize callback to set window vars
- 
+
+    GLfloat pointLightPosition[3] = { 10.f, 10.f, 10.f };
+    GLfloat pointLightColor[4] = { 1.f, 0.16f, 0.f };
+
+    GLfloat ambientLightIntensity = 0.2f;
+    GLfloat ambientLightColor[4] = { 0.f, 0.5f, 1.f };
+
     const GLfloat cubeVertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
+         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
 
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
 
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
 
-        0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
 
-        0.5f, -0.5f,  0.5f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
 
-        -0.5f,  0.5f, -0.5f,  0.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
     };
 
     const GLuint cubeIndices[] = {
         0,  1,  2,
-        2,  3,  0,
+        3,  4,  5,
 
-        4,  5,  6,
-        6,  7,  4,
-        
-        8, 9, 10,
-        10, 11, 8,
+        6,  7,  8,
+        9, 10, 11,
         
         12, 13, 14,
-        14, 15, 12,
+        15, 16, 17,
         
-        0, 1, 16,
-        16, 11, 0,
+        18, 19, 20,
+        21, 22, 23,
+        
+        24, 25, 26,
+        27, 28, 29,
 
-        17, 13, 6,
-        6, 7, 17
+        30, 31, 32,
+        33, 34, 35
     };
 
     GLuint mainVBO = 0;
@@ -95,8 +116,8 @@ int main(int argc, char **args) {
     GLuint mainVAO = 0;
     glGenVertexArrays(1, &mainVAO);
 
-    GLuint mainTexture = 0;
-    glGenTextures(1, &mainTexture);
+    GLuint mainDiffuseMap = 0;
+    glGenTextures(1, &mainDiffuseMap);
 
     shader::Program mainProgram;
     mainProgram.id = glCreateProgram();
@@ -104,12 +125,22 @@ int main(int argc, char **args) {
         {
             shader::compileProgram(mainProgram, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
 
-            const GLchar* programUniforms[7] = { "vertexColors", "modelMatrix", "viewMatrix", "projectionMatrix", "mixWeight", "texture0", "texture1"};
-            shader::pushUniforms(mainProgram, 7, programUniforms);
+            const GLchar* programUniforms[] = { 
+                "modelMatrix", "viewMatrix", "projectionMatrix", 
+                "normalMatrix", 
+                "diffuseMap", 
+                "ambientLightColor", "ambientLightIntensity", 
+                "pointLightColor", "pointLightPos" };
+            shader::pushUniforms(mainProgram, sizeof(programUniforms) / sizeof(GLchar*), programUniforms);
 
             glUseProgram(mainProgram.id);
-            shader::setUniform(mainProgram, glUniform1i, "texture0", 0);
-            shader::setUniform(mainProgram, glUniform1i, "texture1", 1);
+            shader::setUniform(mainProgram, glUniform1i, "diffuseMap", 0);
+
+            shader::setUniform(mainProgram, glUniform1f, "ambientLightIntensity", ambientLightIntensity);
+            shader::setUniform(mainProgram, glUniform3fv, "ambientLightColor", 1, ambientLightColor);
+
+            shader::setUniform(mainProgram, glUniform3fv, "pointLightPos", 1, pointLightPosition);
+            shader::setUniform(mainProgram, glUniform3fv, "pointLightColor", 1, pointLightColor);
         }
 
         {
@@ -124,10 +155,12 @@ int main(int argc, char **args) {
             glBindVertexArray(mainVAO);
             {
                 glBindBuffer(GL_ARRAY_BUFFER, mainVBO);
-                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-                glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3*sizeof(float)));
+                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+                glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3*sizeof(float)));
+                glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6*sizeof(float)));
                 glEnableVertexAttribArray(0);
                 glEnableVertexAttribArray(1);
+                glEnableVertexAttribArray(2);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mainEBO);
             }
         }
@@ -137,7 +170,7 @@ int main(int argc, char **args) {
             stbi_uc* textureData = stbi_load(PROJECT_PATH "res/texture/kenney/png/Dark/texture_13.png", &textureX, &textureY, &textureChannels, 3);
 
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, mainTexture);
+            glBindTexture(GL_TEXTURE_2D, mainDiffuseMap);
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -149,8 +182,8 @@ int main(int argc, char **args) {
         }
     }
 
-    GLuint batchTexture = 0;
-    glGenTextures(1, &batchTexture);
+    GLuint batchDiffuseMap = 0;
+    glGenTextures(1, &batchDiffuseMap);
 
     shader::Program batchProgram;
     batchProgram.id = glCreateProgram();
@@ -160,7 +193,7 @@ int main(int argc, char **args) {
             stbi_uc* textureData = stbi_load(PROJECT_PATH "res/texture/concrete.png", &textureX, &textureY, &textureChannels, 3);
 
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, batchTexture);
+            glBindTexture(GL_TEXTURE_2D, batchDiffuseMap);
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -184,8 +217,8 @@ int main(int argc, char **args) {
 
     camera::Object mainCamera = { 
         .framebufferClearColor = { 0.92f, 0.92f, 0.92f, 1.0f },
-        .position = { 0.0f, 0.0f, 1.0f },
-        .rotation = { -90.f, 0.f },
+        .position = { 2.f, 2.0f, 2.0f },
+        .rotation = { 135.f, -45.f },
         .fov = 75,
         .framebufferWidth = app::window_vars.framebufferWidth,
         .framebufferHeight = app::window_vars.framebufferHeight
@@ -193,23 +226,9 @@ int main(int argc, char **args) {
 
     object::MainCube mainCubeData = {
         .position = {0.f, 0.f, 0.f},
-        .rotation = { -45.f, -45.f, -45.f},
+        .rotation = { 30.f, 60.f, 0.f},
         .scale = { 1.f, 1.f, 1.f },
-        .vertexColors = { { 0.5f, 0.2f, 1.0f, 1.0f },
-                          { 0.5f, 1.0f, 0.2f, 1.0f },
-                          { 1.0f, 0.5f, 0.2f, 1.0f },
-                          { 1.0f, 0.2f, 0.5f, 1.0f } },
-        .mixWeight = 0.6f
     };
-    mainCubeData.position[0] = 2.f - ((rand() % 401) / 100.f);
-    mainCubeData.position[1] = 2.f - ((rand() % 401) / 100.f);
-    mainCubeData.position[2] = -3.f - ((rand() % 401) / 100.f);
-    mainCubeData.rotation[0] = 180.f - ((rand() % 3601) / 10.f);
-    mainCubeData.rotation[1] = 180.f - ((rand() % 3601) / 10.f);
-    mainCubeData.rotation[2] = 180.f - ((rand() % 3601) / 10.f);
-    mainCubeData.scale[0] = 4.f - ((rand() % 201) / 100.f);
-    mainCubeData.scale[1] = 4.f - ((rand() % 201) / 100.f);
-    mainCubeData.scale[2] = 4.f - ((rand() % 201) / 100.f);
 
     std::vector<object::BatchCube> batchCubes;
 
@@ -254,43 +273,48 @@ int main(int argc, char **args) {
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             }
 
+
+            glm::mat4 viewMatrix = camera::buildViewMatrix(mainCamera);
+
             mainCamera.framebufferWidth = app::window_vars.framebufferWidth;
             mainCamera.framebufferHeight = app::window_vars.framebufferHeight;
-            glm::mat4 viewMatrix = camera::buildViewMatrix(mainCamera);
             glm::mat4 projectionMatrix = camera::buildProjectionMatrix(mainCamera);
 
-            glUseProgram(mainProgram.id);
             {
-                glUniformMatrix4fv(mainProgram.uniforms["viewMatrix"], 1, GL_FALSE, glm::value_ptr(viewMatrix));
-                glUniformMatrix4fv(mainProgram.uniforms["projectionMatrix"], 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, mainTexture);
+                glUseProgram(mainProgram.id);
+                shader::setUniform(mainProgram, glUniformMatrix4fv, "viewMatrix", 1, GL_FALSE, glm::value_ptr(viewMatrix));
+                shader::setUniform(mainProgram, glUniformMatrix4fv, "projectionMatrix", 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
                 glBindVertexArray(mainVAO);
+
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, mainDiffuseMap);
+
                 glm::mat4 modelMatrix = math::buildModelMatrix(mainCubeData.position, mainCubeData.rotation, mainCubeData.scale);
-                glUniformMatrix4fv(mainProgram.uniforms["modelMatrix"], 1, GL_FALSE, glm::value_ptr(modelMatrix));
- 
-                glUniform1f(mainProgram.uniforms["mixWeight"], mainCubeData.mixWeight);
-                glUniform4fv(mainProgram.uniforms["vertexColors"], 4, (GLfloat *)mainCubeData.vertexColors);
+                shader::setUniform(mainProgram, glUniformMatrix4fv, "modelMatrix", 1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+                glm::mat3 normalMatrix = math::buildNormalMatrixFromModelMatrix(modelMatrix);
+                shader::setUniform(mainProgram, glUniformMatrix3fv, "normalMatrix", 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
                 glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (void *)0);
             }
 
-            glUseProgram(batchProgram.id);
             {
+                glUseProgram(batchProgram.id);
+                shader::setUniform(batchProgram, glUniformMatrix4fv, "viewMatrix", 1, GL_FALSE, glm::value_ptr(viewMatrix));
+                shader::setUniform(batchProgram, glUniformMatrix4fv, "projectionMatrix", 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+
                 glBindVertexArray(mainVAO);
 
                 glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, batchTexture);
+                glBindTexture(GL_TEXTURE_2D, batchDiffuseMap);
 
-                glUniformMatrix4fv(batchProgram.uniforms["viewMatrix"], 1, GL_FALSE, glm::value_ptr(viewMatrix));
-                glUniformMatrix4fv(batchProgram.uniforms["projectionMatrix"], 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-                glUniform1f(batchProgram.uniforms["mixWeight"], 0.9f);
+                shader::setUniform(batchProgram, glUniform1f, "mixWeight", 0.9f);
                 for(size_t i = 0; i < batchCubes.size(); i++) {
                     glm::mat4 modelMatrix = math::buildModelMatrix(batchCubes.at(i).position, batchCubes.at(i).rotation, batchCubes.at(i).scale);
-                    glUniformMatrix4fv(batchProgram.uniforms["modelMatrix"], 1, GL_FALSE, glm::value_ptr(modelMatrix));
-                    glUniform4fv(batchProgram.uniforms["mixColor"], 1, batchCubes.at(i).mixColor);
+                    shader::setUniform(batchProgram, glUniformMatrix4fv, "modelMatrix", 1, GL_FALSE, glm::value_ptr(modelMatrix));
+                    
+                    shader::setUniform(batchProgram, glUniform4fv, "mixColor", 1, batchCubes.at(i).mixColor);
 
                     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (void *)0);
                 }

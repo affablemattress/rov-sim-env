@@ -1,13 +1,26 @@
 #version 330 core
 
-in vec4 vertexColor;
-in vec2 texCoord;
+in vec3 fragPos;
+in vec3 fragNormal;
+in vec2 fragUV;
 
-uniform float mixWeight;
-uniform sampler2D texture0;
+uniform sampler2D diffuseMap;
+
+uniform vec3 ambientLightColor;
+uniform float ambientLightIntensity;
+
+uniform vec3 pointLightColor;
+uniform vec3 pointLightPos;
 
 out vec4 fragColor;
 
 void main() {
-    fragColor = mix(vertexColor, texture(texture0, texCoord), mixWeight);
+    vec3 lightDirection = normalize(pointLightPos - fragPos);
+
+    vec3 ambientLight = ambientLightColor * ambientLightIntensity;
+
+    float diffuseLightIntensity = max(dot(fragNormal, lightDirection), 0.f);
+    vec3 diffuseLight = pointLightColor * diffuseLightIntensity;
+
+    fragColor = vec4(ambientLight + diffuseLight, 1.f) * texture(diffuseMap, fragUV);
 }

@@ -69,7 +69,7 @@ namespace input {
         yPosPrev = yPos;
 
         if(!app::state_vars.isMouseEnabled) {
-            refs->camera->rotation.x += app::settings.mouseSensitivity * deltaX;
+            refs->camera->rotation.x -= app::settings.mouseSensitivity * deltaX;
             refs->camera->rotation.y -= app::settings.mouseSensitivity * deltaY;
 
             if (refs->camera->rotation.x > 180.0) refs->camera->rotation.x -= 360.0;
