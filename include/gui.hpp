@@ -19,6 +19,12 @@ namespace gui {
         object::MainCube* mainCube;
 
         std::vector<object::BatchCube>* batchCubes;
+
+        GLfloat* pointLightPosition;
+        GLfloat* pointLightColor;
+
+        GLfloat* ambientLightIntensity;
+        GLfloat* ambientLightColor;
     };
 
     extern void registerRefs(gui::References* refs);

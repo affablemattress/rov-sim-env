@@ -36,6 +36,16 @@ namespace gui {
                 ImGui::SliderFloat3("Rotate", refs->mainCube->rotation, 180.f, -180.f);
             }
 
+            if(ImGui::TreeNode("LIGHT")) {
+                ImGui::SeparatorText("Point Light");
+                ImGui::SliderFloat3("Position", refs->pointLightPosition, -5.f, 5.f);
+                ImGui::ColorEdit3("Pnt. Color", refs->pointLightColor);
+                ImGui::SeparatorText("Ambient Light");
+                ImGui::SliderFloat("Intensity", refs->ambientLightIntensity, 0.f, 1.f);
+                ImGui::ColorEdit3("Amb. Color", refs->ambientLightColor);
+                ImGui::TreePop();
+            }
+
             if(ImGui::TreeNode("BATCH")) {
                 ImGui::SeparatorText("Operations");
                 if(ImGui::Button("Push Random Object")) {

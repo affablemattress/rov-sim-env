@@ -37,7 +37,7 @@ int main(int argc, char **args) {
      */
     callbackGLFW::windowResize(window, 0, 0); // Call resize callback to set window vars
 
-    GLfloat pointLightPosition[3] = { 10.f, 10.f, 10.f };
+    GLfloat pointLightPosition[3] = { 5.f, 5.f, 5.f };
     GLfloat pointLightColor[4] = { 1.f, 0.16f, 0.f };
 
     GLfloat ambientLightIntensity = 0.2f;
@@ -236,6 +236,12 @@ int main(int argc, char **args) {
         .camera = &mainCamera,
         .mainCube = &mainCubeData,
         .batchCubes = &batchCubes,
+
+        .pointLightPosition = pointLightPosition,
+        .pointLightColor = pointLightColor,
+
+        .ambientLightIntensity = &ambientLightIntensity,
+        .ambientLightColor = ambientLightColor
     };
     gui::registerRefs(&guiRefs);
 
@@ -295,6 +301,12 @@ int main(int argc, char **args) {
 
                 glm::mat3 normalMatrix = math::buildNormalMatrixFromModelMatrix(modelMatrix);
                 shader::setUniform(mainProgram, glUniformMatrix3fv, "normalMatrix", 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+                shader::setUniform(mainProgram, glUniform1f, "ambientLightIntensity", ambientLightIntensity);
+                shader::setUniform(mainProgram, glUniform3fv, "ambientLightColor", 1, ambientLightColor);
+
+                shader::setUniform(mainProgram, glUniform3fv, "pointLightPos", 1, pointLightPosition);
+                shader::setUniform(mainProgram, glUniform3fv, "pointLightColor", 1, pointLightColor);
 
                 glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (void *)0);
             }
