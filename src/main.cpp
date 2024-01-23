@@ -37,8 +37,11 @@ int main(int argc, char **args) {
      */
     callbackGLFW::windowResize(window, 0, 0); // Call resize callback to set window vars
 
-    GLfloat pointLightPosition[3] = { 5.f, 5.f, 5.f };
-    GLfloat pointLightColor[4] = { 1.f, 0.16f, 0.f };
+    GLfloat pointLightPosition[3] = { 5.f, 5.f, -5.f };
+    GLfloat pointLightColor[4] = { 1.f, 0.9f, 0.9f };
+
+    GLint specularShininess = 32;
+    GLfloat specularStrength = 0.5f;
 
     GLfloat ambientLightIntensity = 0.2f;
     GLfloat ambientLightColor[4] = { 0.f, 0.5f, 1.f };
@@ -130,7 +133,9 @@ int main(int argc, char **args) {
                 "normalMatrix", 
                 "diffuseMap", 
                 "ambientLightColor", "ambientLightIntensity", 
-                "pointLightColor", "pointLightPos" };
+                "pointLightColor", "pointLightPos",
+                "specularShininess", "specularStrength",
+                "cameraPos" };
             shader::pushUniforms(mainProgram, sizeof(programUniforms) / sizeof(GLchar*), programUniforms);
 
             glUseProgram(mainProgram.id);
@@ -240,8 +245,11 @@ int main(int argc, char **args) {
         .pointLightPosition = pointLightPosition,
         .pointLightColor = pointLightColor,
 
+        .specularShininess = &specularShininess,
+        .specularStrength = &specularStrength,
+
         .ambientLightIntensity = &ambientLightIntensity,
-        .ambientLightColor = ambientLightColor
+        .ambientLightColor = ambientLightColor,
     };
     gui::registerRefs(&guiRefs);
 
@@ -307,6 +315,11 @@ int main(int argc, char **args) {
 
                 shader::setUniform(mainProgram, glUniform3fv, "pointLightPos", 1, pointLightPosition);
                 shader::setUniform(mainProgram, glUniform3fv, "pointLightColor", 1, pointLightColor);
+
+                shader::setUniform(mainProgram, glUniform1i, "specularShininess", specularShininess);
+                shader::setUniform(mainProgram, glUniform1f, "specularStrength", specularStrength);
+
+                shader::setUniform(mainProgram, glUniform3fv, "cameraPos", 1, glm::value_ptr(mainCamera.position));
 
                 glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (void *)0);
             }

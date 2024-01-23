@@ -23,6 +23,9 @@ namespace gui {
         GLfloat* pointLightPosition;
         GLfloat* pointLightColor;
 
+        GLint* specularShininess;
+        GLfloat* specularStrength;
+
         GLfloat* ambientLightIntensity;
         GLfloat* ambientLightColor;
     };

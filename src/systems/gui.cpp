@@ -34,6 +34,7 @@ namespace gui {
                 ImGui::SliderFloat3("Translate", refs->mainCube->position, -10.f, 10.f);
                 ImGui::SliderFloat3("Scale", refs->mainCube->scale, 0.01f, 10.f);
                 ImGui::SliderFloat3("Rotate", refs->mainCube->rotation, 180.f, -180.f);
+                ImGui::TreePop();
             }
 
             if(ImGui::TreeNode("LIGHT")) {
@@ -43,6 +44,9 @@ namespace gui {
                 ImGui::SeparatorText("Ambient Light");
                 ImGui::SliderFloat("Intensity", refs->ambientLightIntensity, 0.f, 1.f);
                 ImGui::ColorEdit3("Amb. Color", refs->ambientLightColor);
+                ImGui::SeparatorText("Specular Light");
+                ImGui::SliderInt("Shininess", refs->specularShininess, 1, 256);
+                ImGui::SliderFloat("Strength", refs->specularStrength, 0.f, 1.f);
                 ImGui::TreePop();
             }
 
