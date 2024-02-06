@@ -8,7 +8,8 @@
 #include "object.hpp"
 #include "input.hpp"
 
-#include "shader/mainShaderUniforms.hpp"
+#include "shader/viewModel.hpp"
+#include "shader/light.hpp"
 
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
@@ -39,14 +40,17 @@ int main(int argc, char **args) {
      */
     callbackGLFW::windowResize(window, 0, 0); // Call resize callback to set window vars
 
-    GLfloat pointLightPosition[3] = { -0.6f, 3.2f, -0.191f };
-    GLfloat pointLightColor[4] = { 1.f, 0.9f, 0.9f };
+    uniform::PointLight pointLight({ 0.f, 0.5f, 1.f, 1.f }, { 1.f, 0.9f, 0.9f, 1.f }, { -0.6f, 3.2f, -0.191f },
+        0.2f, 0.5f, 1.f, 1.f, 1.f);
+    uniform::PointLight pointLight2({ 0.8f, 0.2f, 0.f, 1.f }, { 1.f, 0.0f, 0.f, 1.f }, { -3.f, 4.f, -4.f },
+        0.2f, 0.5f, 1.f, 1.f, 1.f);
+
+    uniform::LightData lightData;
+    lightData.pointLights[0] = pointLight;
+    lightData.pointLights[1] = pointLight2;
+    lightData.pointLightCount = 2;
 
     GLfloat specularShininess = 32.f;
-    GLfloat specularStrength = 0.5f;
-
-    GLfloat ambientLightIntensity = 0.2f;
-    GLfloat ambientLightColor[4] = { 0.f, 0.5f, 1.f };
 
     const GLfloat cubeVertices[] = {
         -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
@@ -124,11 +128,10 @@ int main(int argc, char **args) {
     GLuint mainDiffuseMap = 0;
     glGenTextures(1, &mainDiffuseMap);
 
-    GLuint u_cameraMatrices = 0, u_modelMatrices = 0;
-    glGenBuffers(1, &u_cameraMatrices);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, u_cameraMatrices);
-    glGenBuffers(1, &u_modelMatrices);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 1, u_modelMatrices);
+    GLuint u_cameraData = 0, u_modelData = 0, u_lightData =0;
+    glGenBuffers(1, &u_cameraData);
+    glGenBuffers(1, &u_modelData);
+    glGenBuffers(1, &u_lightData);
 
     shader::Program mainProgram;
     mainProgram.id = glCreateProgram();
@@ -138,13 +141,20 @@ int main(int argc, char **args) {
 
             const GLchar* programUniforms[] = { 
                 "diffuseMap", 
-                "ambientLightColor", "ambientLightIntensity", 
-                "pointLightColor", "pointLightPos",
-                "specularShininess", "specularStrength"};
+                "specularShininess"
+            };
             shader::pushUniforms(mainProgram, sizeof(programUniforms) / sizeof(GLchar*), programUniforms);
 
             glUseProgram(mainProgram.id);
             shader::setUniform(mainProgram, glUniform1i, "diffuseMap", 0);
+
+            glBindBufferBase(GL_UNIFORM_BUFFER, 0, u_cameraData);
+            glBindBufferBase(GL_UNIFORM_BUFFER, 1, u_modelData);
+            glBindBufferBase(GL_UNIFORM_BUFFER, 2, u_lightData);
+
+            glUniformBlockBinding(mainProgram.id, glGetUniformBlockIndex(mainProgram.id, "CameraData"), 0);
+            glUniformBlockBinding(mainProgram.id, glGetUniformBlockIndex(mainProgram.id, "ModelData"), 1);
+            glUniformBlockBinding(mainProgram.id, glGetUniformBlockIndex(mainProgram.id, "LightData"), 2);
         }
 
         {
@@ -218,9 +228,6 @@ int main(int argc, char **args) {
 
             glUseProgram(batchProgram.id);
             shader::setUniform(batchProgram, glUniform1i, "texture0", 0);
-
-            glUniformBlockBinding(mainProgram.id, glGetUniformBlockIndex(mainProgram.id, "CameraData"), 0);
-            glUniformBlockBinding(mainProgram.id, glGetUniformBlockIndex(mainProgram.id, "ModelData"), 1);
         }
     }
 
@@ -246,14 +253,14 @@ int main(int argc, char **args) {
         .mainCube = &mainCubeData,
         .batchCubes = &batchCubes,
 
-        .pointLightPosition = pointLightPosition,
-        .pointLightColor = pointLightColor,
+        .pointLightPosition = glm::value_ptr(pointLight.pos),
+        .pointLightColor = glm::value_ptr(pointLight.color),
 
         .specularShininess = &specularShininess,
-        .specularStrength = &specularStrength,
+        .specularStrength = &pointLight.specularIntensity,
 
-        .ambientLightIntensity = &ambientLightIntensity,
-        .ambientLightColor = ambientLightColor,
+        .ambientLightIntensity = &pointLight.ambientIntensity,
+        .ambientLightColor = glm::value_ptr(pointLight.ambientColor)
     };
     gui::registerRefs(&guiRefs);
 
@@ -293,9 +300,9 @@ int main(int argc, char **args) {
 
             mainCamera.framebufferWidth = app::window_vars.framebufferWidth;
             mainCamera.framebufferHeight = app::window_vars.framebufferHeight;
-            CameraData cameraMatrices(mainCamera);
-            glBindBuffer(GL_UNIFORM_BUFFER, u_cameraMatrices);
-            glBufferData(GL_UNIFORM_BUFFER, sizeof(CameraData), &cameraMatrices, GL_DYNAMIC_DRAW);
+            uniform::CameraData cameraMatrices(mainCamera);
+            glBindBuffer(GL_UNIFORM_BUFFER, u_cameraData);
+            glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::CameraData), &cameraMatrices, GL_DYNAMIC_DRAW);
 
             {
                 glUseProgram(mainProgram.id);
@@ -305,18 +312,16 @@ int main(int argc, char **args) {
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, mainDiffuseMap);
 
-                ModelData modelMatrices(mainCubeData.position, mainCubeData.rotation, mainCubeData.scale);
-                glBindBuffer(GL_UNIFORM_BUFFER, u_modelMatrices);
-                glBufferData(GL_UNIFORM_BUFFER, sizeof(ModelData), &modelMatrices, GL_DYNAMIC_DRAW);
+                uniform::ModelData modelData(mainCubeData.position, mainCubeData.rotation, mainCubeData.scale);
+                glBindBuffer(GL_UNIFORM_BUFFER, u_modelData);
+                glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::ModelData), &modelData, GL_DYNAMIC_DRAW);
 
-                shader::setUniform(mainProgram, glUniform1f, "ambientLightIntensity", ambientLightIntensity);
-                shader::setUniform(mainProgram, glUniform3fv, "ambientLightColor", 1, ambientLightColor);
-
-                shader::setUniform(mainProgram, glUniform3fv, "pointLightPos", 1, pointLightPosition);
-                shader::setUniform(mainProgram, glUniform3fv, "pointLightColor", 1, pointLightColor);
+                spdlog::info(sizeof(uniform::LightData));
+                lightData.pointLights[0] = pointLight;
+                glBindBuffer(GL_UNIFORM_BUFFER, u_lightData);
+                glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::LightData), &lightData, GL_DYNAMIC_DRAW);
 
                 shader::setUniform(mainProgram, glUniform1f, "specularShininess", specularShininess);
-                shader::setUniform(mainProgram, glUniform1f, "specularStrength", specularStrength);
 
                 glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (void *)0);
             }
