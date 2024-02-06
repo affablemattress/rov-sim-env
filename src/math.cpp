@@ -11,8 +11,8 @@ namespace math {
         return returnMatrix;
     }
 
-    glm::mat3 buildNormalMatrixFromModelMatrix(const glm::mat4& modelMatrix) {
-        return glm::mat3(glm::transpose(glm::inverse(modelMatrix)));
+    glm::mat4 buildNormalMatrixFromModelMatrix(const glm::mat4& modelMatrix) {
+        return glm::transpose(glm::inverse(modelMatrix));
     }
 
     glm::vec3 getDirectionVectorFrom2DEuler(const glm::vec2& euler) {

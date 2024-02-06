@@ -1,9 +1,5 @@
 #version 330 core
 
-in vec3 fragPos;
-in vec3 fragNormal;
-in vec2 fragUV;
-
 uniform sampler2D diffuseMap;
 
 uniform vec3 ambientLightColor;
@@ -12,25 +8,36 @@ uniform float ambientLightIntensity;
 uniform vec3 pointLightColor;
 uniform vec3 pointLightPos;
 
-uniform int specularShininess;
+uniform float specularShininess;
 uniform float specularStrength;
 
-uniform vec3 cameraPos;
+layout (std140) uniform CameraData {
+    mat4 viewMatrix;
+    mat4 projectionMatrix;
+
+    vec3 pos;
+} cameraData;
+
+in FragmentData{
+    vec3 pos;
+    vec3 normal;
+    vec2 UV;
+} fragData;
 
 out vec4 fragColor;
 
 void main() {
-    vec3 lightDirection = normalize(pointLightPos - fragPos);
-    vec3 reflectionDirecion = reflect(-lightDirection, fragNormal);
-    vec3 viewDirection = normalize(cameraPos - fragPos);
+    vec3 lightDirection = normalize(pointLightPos - fragData.pos);
+    vec3 reflectionDirection = reflect(-lightDirection, fragData.normal);
+    vec3 viewDirection = normalize(cameraData.pos - fragData.pos);
 
     vec3 ambientLight = ambientLightColor * ambientLightIntensity;
 
-    float diffuseLightIntensity = max(dot(fragNormal, lightDirection), 0.f);
+    float diffuseLightIntensity = max(dot(fragData.normal, lightDirection), 0.0);
     vec3 diffuseLight = pointLightColor * diffuseLightIntensity;
 
-    float specularIntensity = pow(max(dot(viewDirection, reflectionDirecion), 0.0), specularShininess) * specularStrength;
-    vec3 specularLight = specularIntensity * pointLightColor;
+    float specularIntensity = pow(max(dot(viewDirection, reflectionDirection), 0.0), specularShininess) * specularStrength;
+    vec3 specularLight = pointLightColor * specularIntensity;
 
-    fragColor = vec4(specularLight + ambientLight + diffuseLight, 1.f) * texture(diffuseMap, fragUV);
+    fragColor = vec4(specularLight + ambientLight + diffuseLight, 1.f) * texture(diffuseMap, fragData.UV);
 }

@@ -4,20 +4,28 @@ layout (location = 0) in vec3 vertexPos;
 layout (location = 1) in vec3 vertexNormal;
 layout (location = 2) in vec2 vertexUV;
 
-uniform mat4 modelMatrix;
-uniform mat4 viewMatrix;
-uniform mat4 projectionMatrix;
+layout (std140) uniform CameraData {
+    mat4 viewMatrix;
+    mat4 projectionMatrix;
 
-uniform mat3 normalMatrix;
+    vec3 pos;
+} cameraData;
 
-out vec3 fragPos;
-out vec3 fragNormal;
-out vec2 fragUV;
+layout (std140) uniform ModelData {
+    mat4 modelMatrix;
+    mat4 normalMatrix;
+} modelData;
+
+out FragmentData{
+    vec3 pos;
+    vec3 normal;
+    vec2 UV;
+} fragData;
 
 void main() {
-    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(vertexPos, 1.f);
+    gl_Position = cameraData.projectionMatrix * cameraData.viewMatrix * modelData.modelMatrix * vec4(vertexPos, 1.f);
 
-    fragPos = vec3(modelMatrix * vec4(vertexPos, 1.f));
-    fragNormal = normalMatrix * vertexNormal;
-    fragUV = vertexUV;
+    fragData.pos = vec3(modelData.modelMatrix * vec4(vertexPos, 1.f));
+    fragData.normal = normalize(mat3(modelData.normalMatrix) * vertexNormal);
+    fragData.UV = vertexUV;
 }

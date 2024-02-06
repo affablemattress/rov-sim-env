@@ -45,7 +45,7 @@ namespace gui {
                 ImGui::SliderFloat("Intensity", refs->ambientLightIntensity, 0.f, 1.f);
                 ImGui::ColorEdit3("Amb. Color", refs->ambientLightColor);
                 ImGui::SeparatorText("Specular Light");
-                ImGui::SliderInt("Shininess", refs->specularShininess, 1, 256);
+                ImGui::SliderFloat("Shininess", refs->specularShininess, 1.f, 256.f);
                 ImGui::SliderFloat("Strength", refs->specularStrength, 0.f, 1.f);
                 ImGui::TreePop();
             }

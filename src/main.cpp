@@ -8,6 +8,8 @@
 #include "object.hpp"
 #include "input.hpp"
 
+#include "shader/mainShaderUniforms.hpp"
+
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
 #include "spdlog/spdlog.h"
@@ -37,10 +39,10 @@ int main(int argc, char **args) {
      */
     callbackGLFW::windowResize(window, 0, 0); // Call resize callback to set window vars
 
-    GLfloat pointLightPosition[3] = { 5.f, 5.f, -5.f };
+    GLfloat pointLightPosition[3] = { -0.6f, 3.2f, -0.191f };
     GLfloat pointLightColor[4] = { 1.f, 0.9f, 0.9f };
 
-    GLint specularShininess = 32;
+    GLfloat specularShininess = 32.f;
     GLfloat specularStrength = 0.5f;
 
     GLfloat ambientLightIntensity = 0.2f;
@@ -96,13 +98,13 @@ int main(int argc, char **args) {
 
         6,  7,  8,
         9, 10, 11,
-        
+
         12, 13, 14,
         15, 16, 17,
-        
+
         18, 19, 20,
         21, 22, 23,
-        
+
         24, 25, 26,
         27, 28, 29,
 
@@ -122,6 +124,12 @@ int main(int argc, char **args) {
     GLuint mainDiffuseMap = 0;
     glGenTextures(1, &mainDiffuseMap);
 
+    GLuint u_cameraMatrices = 0, u_modelMatrices = 0;
+    glGenBuffers(1, &u_cameraMatrices);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, u_cameraMatrices);
+    glGenBuffers(1, &u_modelMatrices);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 1, u_modelMatrices);
+
     shader::Program mainProgram;
     mainProgram.id = glCreateProgram();
     {
@@ -129,23 +137,14 @@ int main(int argc, char **args) {
             shader::compileProgram(mainProgram, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
 
             const GLchar* programUniforms[] = { 
-                "modelMatrix", "viewMatrix", "projectionMatrix", 
-                "normalMatrix", 
                 "diffuseMap", 
                 "ambientLightColor", "ambientLightIntensity", 
                 "pointLightColor", "pointLightPos",
-                "specularShininess", "specularStrength",
-                "cameraPos" };
+                "specularShininess", "specularStrength"};
             shader::pushUniforms(mainProgram, sizeof(programUniforms) / sizeof(GLchar*), programUniforms);
 
             glUseProgram(mainProgram.id);
             shader::setUniform(mainProgram, glUniform1i, "diffuseMap", 0);
-
-            shader::setUniform(mainProgram, glUniform1f, "ambientLightIntensity", ambientLightIntensity);
-            shader::setUniform(mainProgram, glUniform3fv, "ambientLightColor", 1, ambientLightColor);
-
-            shader::setUniform(mainProgram, glUniform3fv, "pointLightPos", 1, pointLightPosition);
-            shader::setUniform(mainProgram, glUniform3fv, "pointLightColor", 1, pointLightColor);
         }
 
         {
@@ -177,12 +176,13 @@ int main(int argc, char **args) {
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, mainDiffuseMap);
 
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureX, textureY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
+            //stbi_image_free(textureData);
+
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureX, textureY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
-            //stbi_image_free(textureData);
             glGenerateMipmap(GL_TEXTURE_2D);
         }
     }
@@ -200,12 +200,13 @@ int main(int argc, char **args) {
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, batchDiffuseMap);
 
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureX, textureY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
+            //stbi_image_free(textureData);
+
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureX, textureY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
-            //stbi_image_free(textureData);
             glGenerateMipmap(GL_TEXTURE_2D);
         }
 
@@ -217,6 +218,9 @@ int main(int argc, char **args) {
 
             glUseProgram(batchProgram.id);
             shader::setUniform(batchProgram, glUniform1i, "texture0", 0);
+
+            glUniformBlockBinding(mainProgram.id, glGetUniformBlockIndex(mainProgram.id, "CameraData"), 0);
+            glUniformBlockBinding(mainProgram.id, glGetUniformBlockIndex(mainProgram.id, "ModelData"), 1);
         }
     }
 
@@ -232,7 +236,7 @@ int main(int argc, char **args) {
     object::MainCube mainCubeData = {
         .position = {0.f, 0.f, 0.f},
         .rotation = { 30.f, 60.f, 0.f},
-        .scale = { 1.f, 1.f, 1.f },
+        .scale = { 10.f, 1.f, 10.f },
     };
 
     std::vector<object::BatchCube> batchCubes;
@@ -287,28 +291,23 @@ int main(int argc, char **args) {
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             }
 
-
-            glm::mat4 viewMatrix = camera::buildViewMatrix(mainCamera);
-
             mainCamera.framebufferWidth = app::window_vars.framebufferWidth;
             mainCamera.framebufferHeight = app::window_vars.framebufferHeight;
-            glm::mat4 projectionMatrix = camera::buildProjectionMatrix(mainCamera);
+            CameraData cameraMatrices(mainCamera);
+            glBindBuffer(GL_UNIFORM_BUFFER, u_cameraMatrices);
+            glBufferData(GL_UNIFORM_BUFFER, sizeof(CameraData), &cameraMatrices, GL_DYNAMIC_DRAW);
 
             {
                 glUseProgram(mainProgram.id);
-                shader::setUniform(mainProgram, glUniformMatrix4fv, "viewMatrix", 1, GL_FALSE, glm::value_ptr(viewMatrix));
-                shader::setUniform(mainProgram, glUniformMatrix4fv, "projectionMatrix", 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
                 glBindVertexArray(mainVAO);
 
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, mainDiffuseMap);
 
-                glm::mat4 modelMatrix = math::buildModelMatrix(mainCubeData.position, mainCubeData.rotation, mainCubeData.scale);
-                shader::setUniform(mainProgram, glUniformMatrix4fv, "modelMatrix", 1, GL_FALSE, glm::value_ptr(modelMatrix));
-
-                glm::mat3 normalMatrix = math::buildNormalMatrixFromModelMatrix(modelMatrix);
-                shader::setUniform(mainProgram, glUniformMatrix3fv, "normalMatrix", 1, GL_FALSE, glm::value_ptr(normalMatrix));
+                ModelData modelMatrices(mainCubeData.position, mainCubeData.rotation, mainCubeData.scale);
+                glBindBuffer(GL_UNIFORM_BUFFER, u_modelMatrices);
+                glBufferData(GL_UNIFORM_BUFFER, sizeof(ModelData), &modelMatrices, GL_DYNAMIC_DRAW);
 
                 shader::setUniform(mainProgram, glUniform1f, "ambientLightIntensity", ambientLightIntensity);
                 shader::setUniform(mainProgram, glUniform3fv, "ambientLightColor", 1, ambientLightColor);
@@ -316,18 +315,16 @@ int main(int argc, char **args) {
                 shader::setUniform(mainProgram, glUniform3fv, "pointLightPos", 1, pointLightPosition);
                 shader::setUniform(mainProgram, glUniform3fv, "pointLightColor", 1, pointLightColor);
 
-                shader::setUniform(mainProgram, glUniform1i, "specularShininess", specularShininess);
+                shader::setUniform(mainProgram, glUniform1f, "specularShininess", specularShininess);
                 shader::setUniform(mainProgram, glUniform1f, "specularStrength", specularStrength);
-
-                shader::setUniform(mainProgram, glUniform3fv, "cameraPos", 1, glm::value_ptr(mainCamera.position));
 
                 glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (void *)0);
             }
 
             {
                 glUseProgram(batchProgram.id);
-                shader::setUniform(batchProgram, glUniformMatrix4fv, "viewMatrix", 1, GL_FALSE, glm::value_ptr(viewMatrix));
-                shader::setUniform(batchProgram, glUniformMatrix4fv, "projectionMatrix", 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+                shader::setUniform(batchProgram, glUniformMatrix4fv, "viewMatrix", 1, GL_FALSE, glm::value_ptr(cameraMatrices.viewMatrix));
+                shader::setUniform(batchProgram, glUniformMatrix4fv, "projectionMatrix", 1, GL_FALSE, glm::value_ptr(cameraMatrices.projectionMatrix));
 
                 glBindVertexArray(mainVAO);
 
