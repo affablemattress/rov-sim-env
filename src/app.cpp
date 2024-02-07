@@ -15,6 +15,7 @@ namespace app {
         
         .mouseSensitivity = 0.1,
         .movementSpeed = 1.0,
+        .sprintModifier = 1.5,
 
         .cameraMaxY = 85.,
         .cameraMinY = -85.

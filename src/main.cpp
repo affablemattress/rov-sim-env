@@ -8,6 +8,8 @@
 #include "object.hpp"
 #include "input.hpp"
 
+#include "scene/cubeData.hpp"
+
 #include "shader/viewModel.hpp"
 #include "shader/light.hpp"
 
@@ -52,70 +54,6 @@ int main(int argc, char **args) {
 
     GLfloat specularShininess = 32.f;
 
-    const GLfloat cubeVertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
-
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-
-         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
-    };
-
-    const GLuint cubeIndices[] = {
-        0,  1,  2,
-        3,  4,  5,
-
-        6,  7,  8,
-        9, 10, 11,
-
-        12, 13, 14,
-        15, 16, 17,
-
-        18, 19, 20,
-        21, 22, 23,
-
-        24, 25, 26,
-        27, 28, 29,
-
-        30, 31, 32,
-        33, 34, 35
-    };
-
     GLuint mainVBO = 0;
     glGenBuffers(1, &mainVBO);
 
@@ -132,6 +70,10 @@ int main(int argc, char **args) {
     glGenBuffers(1, &u_cameraData);
     glGenBuffers(1, &u_modelData);
     glGenBuffers(1, &u_lightData);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, u_cameraData);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 1, u_modelData);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 2, u_lightData);
+
 
     shader::Program mainProgram;
     mainProgram.id = glCreateProgram();
@@ -147,10 +89,6 @@ int main(int argc, char **args) {
 
             glUseProgram(mainProgram.id);
             shader::setUniform(mainProgram, glUniform1i, "diffuseMap", 0);
-
-            glBindBufferBase(GL_UNIFORM_BUFFER, 0, u_cameraData);
-            glBindBufferBase(GL_UNIFORM_BUFFER, 1, u_modelData);
-            glBindBufferBase(GL_UNIFORM_BUFFER, 2, u_lightData);
 
             glUniformBlockBinding(mainProgram.id, glGetUniformBlockIndex(mainProgram.id, "CameraData"), 0);
             glUniformBlockBinding(mainProgram.id, glGetUniformBlockIndex(mainProgram.id, "ModelData"), 1);
@@ -223,11 +161,15 @@ int main(int argc, char **args) {
         {
             shader::compileProgram(batchProgram, PROJECT_PATH "res/shader/vertexBatch.glsl", PROJECT_PATH "res/shader/fragmentBatch.glsl");
 
-            const GLchar* programUniforms[6] = { "mixColor", "modelMatrix", "viewMatrix", "projectionMatrix", "mixWeight", "texture0"};
-            shader::pushUniforms(batchProgram, 6, programUniforms);
+            const GLchar* programUniforms[] = { "mixColor", "mixWeight", "diffuseMap"};
+            shader::pushUniforms(batchProgram,  sizeof(programUniforms) / sizeof(GLchar*), programUniforms);
 
             glUseProgram(batchProgram.id);
-            shader::setUniform(batchProgram, glUniform1i, "texture0", 0);
+            shader::setUniform(batchProgram, glUniform1i, "diffuseMap", 0);
+
+            glUniformBlockBinding(batchProgram.id, glGetUniformBlockIndex(batchProgram.id, "CameraData"), 0);
+            glUniformBlockBinding(batchProgram.id, glGetUniformBlockIndex(batchProgram.id, "ModelData"), 1);
+            glUniformBlockBinding(batchProgram.id, glGetUniformBlockIndex(batchProgram.id, "LightData"), 2);
         }
     }
 
@@ -243,7 +185,7 @@ int main(int argc, char **args) {
     object::MainCube mainCubeData = {
         .position = {0.f, 0.f, 0.f},
         .rotation = { 30.f, 60.f, 0.f},
-        .scale = { 10.f, 1.f, 10.f },
+        .scale = { 1.f, 1.f, 1.f },
     };
 
     std::vector<object::BatchCube> batchCubes;
@@ -316,7 +258,6 @@ int main(int argc, char **args) {
                 glBindBuffer(GL_UNIFORM_BUFFER, u_modelData);
                 glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::ModelData), &modelData, GL_DYNAMIC_DRAW);
 
-                spdlog::info(sizeof(uniform::LightData));
                 lightData.pointLights[0] = pointLight;
                 glBindBuffer(GL_UNIFORM_BUFFER, u_lightData);
                 glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::LightData), &lightData, GL_DYNAMIC_DRAW);
@@ -328,8 +269,6 @@ int main(int argc, char **args) {
 
             {
                 glUseProgram(batchProgram.id);
-                shader::setUniform(batchProgram, glUniformMatrix4fv, "viewMatrix", 1, GL_FALSE, glm::value_ptr(cameraMatrices.viewMatrix));
-                shader::setUniform(batchProgram, glUniformMatrix4fv, "projectionMatrix", 1, GL_FALSE, glm::value_ptr(cameraMatrices.projectionMatrix));
 
                 glBindVertexArray(mainVAO);
 
@@ -337,9 +276,11 @@ int main(int argc, char **args) {
                 glBindTexture(GL_TEXTURE_2D, batchDiffuseMap);
 
                 shader::setUniform(batchProgram, glUniform1f, "mixWeight", 0.9f);
+
                 for(size_t i = 0; i < batchCubes.size(); i++) {
-                    glm::mat4 modelMatrix = math::buildModelMatrix(batchCubes.at(i).position, batchCubes.at(i).rotation, batchCubes.at(i).scale);
-                    shader::setUniform(batchProgram, glUniformMatrix4fv, "modelMatrix", 1, GL_FALSE, glm::value_ptr(modelMatrix));
+                    uniform::ModelData modelData(batchCubes.at(i).position, batchCubes.at(i).rotation, batchCubes.at(i).scale);
+                    glBindBuffer(GL_UNIFORM_BUFFER, u_modelData);
+                    glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::ModelData), &modelData, GL_DYNAMIC_DRAW);
                     
                     shader::setUniform(batchProgram, glUniform4fv, "mixColor", 1, batchCubes.at(i).mixColor);
 

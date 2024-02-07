@@ -12,6 +12,7 @@ namespace app {
 
         double mouseSensitivity;
         double movementSpeed;
+        double sprintModifier;
 
         double cameraMaxY;
         double cameraMinY;

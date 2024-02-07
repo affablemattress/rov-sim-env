@@ -13,21 +13,22 @@ namespace input {
 
     void processKeysAsync(GLFWwindow* window) {
         if(!(app::state_vars.isMouseEnabled)) {
+            int movementSpeed = app::settings.movementSpeed * (1 + (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) * app::settings.sprintModifier);
             if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
                 glm::vec3 direction = math::getDirectionVectorFrom2DEuler(refs->camera->rotation);
-                refs->camera->position += direction * (float)(app::settings.movementSpeed * app::window_vars.frametime);
+                refs->camera->position += direction * (float)(movementSpeed * app::window_vars.frametime);
             }
             if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
                 glm::vec3 direction = math::getDirectionVectorFrom2DEuler(refs->camera->rotation);
-                refs->camera->position -= direction * (float)(app::settings.movementSpeed * app::window_vars.frametime);
+                refs->camera->position -= direction * (float)(movementSpeed * app::window_vars.frametime);
             }
             if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
                 glm::vec3 direction = math::getDirectionVectorFrom2DEuler(refs->camera->rotation);
-                refs->camera->position += glm::normalize(glm::cross(direction, { 0., 1., 0. })) * (float)(app::settings.movementSpeed * app::window_vars.frametime);
+                refs->camera->position += glm::normalize(glm::cross(direction, { 0., 1., 0. })) * (float)(movementSpeed * app::window_vars.frametime);
             }
             if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
                 glm::vec3 direction = math::getDirectionVectorFrom2DEuler(refs->camera->rotation);
-                refs->camera->position -= glm::normalize(glm::cross(direction, { 0., 1., 0. })) * (float)(app::settings.movementSpeed * app::window_vars.frametime);
+                refs->camera->position -= glm::normalize(glm::cross(direction, { 0., 1., 0. })) * (float)(movementSpeed * app::window_vars.frametime);
             }
         }
     }

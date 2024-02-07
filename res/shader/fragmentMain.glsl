@@ -59,15 +59,14 @@ layout (std140) uniform CameraData {
     vec3 pos;
 } cameraData;
 
-uniform sampler2D diffuseMap;
-
-uniform float specularShininess;
-
 in FragmentData{
     vec3 pos;
     vec3 normal;
     vec2 UV;
 } fragData;
+
+uniform sampler2D diffuseMap;
+uniform float specularShininess;
 
 out vec4 fragColor;
 
