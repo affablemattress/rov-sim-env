@@ -12,9 +12,10 @@
 
 #include "scene/cubeData.hpp"
 
-#include "shader/shader.hpp"
-#include "shader/uniforms/viewModel.hpp"
-#include "shader/uniforms/light.hpp"
+#include "render/texture.hpp"
+#include "render/shader.hpp"
+#include "render/uniforms/viewModel.hpp"
+#include "render/uniforms/light.hpp"
 
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
@@ -79,24 +80,6 @@ int main(int argc, char **args) {
     mainProgram.id = glCreateProgram();
     {
         {
-            shader::compileProgram(mainProgram, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
-
-            const GLchar* programUniforms[] = { 
-                "diffuseMap", 
-                "specularMap",
-                "specularShininess"
-            };
-            shader::pushUniforms(mainProgram, sizeof(programUniforms) / sizeof(GLchar*), programUniforms);
-
-            glUseProgram(mainProgram.id);
-            shader::setUniform(mainProgram, glUniform1i, "diffuseMap", 0);
-            shader::setUniform(mainProgram, glUniform1i, "specularMap", 1);
-
-            shader::bindUniformBlock(mainProgram, "ModelData", 1);
-            shader::bindUniformBlock(mainProgram, "LightData", 2);
-        }
-
-        {
             glBindBuffer(GL_ARRAY_BUFFER, mainVBO);
             glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
 
@@ -119,32 +102,26 @@ int main(int argc, char **args) {
         }
 
         {
-            GLint textureX, textureY, textureChannels;
-            stbi_uc* textureData = stbi_load(PROJECT_PATH "res/texture/learnopengl/container/diffuse.png", &textureX, &textureY, &textureChannels, 3);
+            texture::loadTexture2D(PROJECT_PATH "res/texture/learnopengl/container/diffuse.png", mainDiffuseMap);
+            texture::loadTexture2D(PROJECT_PATH "res/texture/learnopengl/container/specular.png", mainSpecularMap);
+        }
 
-            glBindTexture(GL_TEXTURE_2D, mainDiffuseMap);
+        {
+            shader::compileProgram(mainProgram, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
 
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureX, textureY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
-            stbi_image_free(textureData);
+            const GLchar* programUniforms[] = { 
+                "diffuseMap", 
+                "specularMap",
+                "specularShininess"
+            };
+            shader::pushUniforms(mainProgram, sizeof(programUniforms) / sizeof(GLchar*), programUniforms);
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glGenerateMipmap(GL_TEXTURE_2D);
+            glUseProgram(mainProgram.id);
+            shader::setUniform(mainProgram, glUniform1i, "diffuseMap", 0);
+            shader::setUniform(mainProgram, glUniform1i, "specularMap", 1);
 
-            textureData = stbi_load(PROJECT_PATH "res/texture/learnopengl/container/specular.png", &textureX, &textureY, &textureChannels, 3);
-
-            glBindTexture(GL_TEXTURE_2D, mainSpecularMap);
-
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureX, textureY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
-            stbi_image_free(textureData);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glGenerateMipmap(GL_TEXTURE_2D);
+            shader::bindUniformBlock(mainProgram, "ModelData", 1);
+            shader::bindUniformBlock(mainProgram, "LightData", 2);
         }
     }
 
@@ -155,19 +132,7 @@ int main(int argc, char **args) {
     batchProgram.id = glCreateProgram();
     {
         {
-            GLint textureX, textureY, textureChannels;
-            stbi_uc* textureData = stbi_load(PROJECT_PATH "res/texture/kenney/png/Dark/texture_13.png", &textureX, &textureY, &textureChannels, 3);
-
-            glBindTexture(GL_TEXTURE_2D, batchDiffuseMap);
-
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureX, textureY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
-            stbi_image_free(textureData);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glGenerateMipmap(GL_TEXTURE_2D);
+            texture::loadTexture2D(PROJECT_PATH "res/texture/kenney/png/Dark/texture_13.png", batchDiffuseMap);
         }
 
         {
@@ -245,6 +210,9 @@ int main(int argc, char **args) {
     if (glfwRawMouseMotionSupported())
         glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
+// ! ||--------------------------------------------------------------------------------||
+// ! ||                                    GAME LOOP                                   ||
+// ! ||--------------------------------------------------------------------------------||
     double prevFrameTime = 0.;
     double currentFrameTime = 0.;
     while (1) {
