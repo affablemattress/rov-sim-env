@@ -66,6 +66,8 @@ in FragmentData{
 } fragData;
 
 uniform sampler2D diffuseMap;
+uniform sampler2D specularMap;
+
 uniform float specularShininess;
 
 out vec4 fragColor;
@@ -86,7 +88,7 @@ void main() {
         vec3 diffuseComponent = lightData.pointLights[i].color * diffuseIntensity;
         
         float specularIntensity = pow(max(dot(viewDir, reflectionDir), 0.0), specularShininess) * lightData.pointLights[i].specularIntensity;
-        vec3 specularComponent = lightData.pointLights[i].color * specularIntensity;
+        vec3 specularComponent = lightData.pointLights[i].color * specularIntensity * vec3(texture(specularMap, fragData.UV));
 
         lightAccum += (specularComponent + ambientComponent + diffuseComponent);
     }

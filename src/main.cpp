@@ -60,9 +60,11 @@ int main(int argc, char **args) {
     glGenVertexArrays(1, &mainVAO);
     glBindVertexArray(mainVAO);
 
-    GLuint mainDiffuseMap = 0;
+    GLuint mainDiffuseMap = 0, mainSpecularMap = 0;
     glGenTextures(1, &mainDiffuseMap);
+    glGenTextures(1, &mainSpecularMap);
     glBindTexture(GL_TEXTURE_2D, mainDiffuseMap);
+    glBindTexture(GL_TEXTURE_2D, mainSpecularMap);
 
     GLuint u_cameraData = 0, u_modelData = 0, u_lightData =0;
     glGenBuffers(1, &u_cameraData);
@@ -81,14 +83,15 @@ int main(int argc, char **args) {
 
             const GLchar* programUniforms[] = { 
                 "diffuseMap", 
+                "specularMap",
                 "specularShininess"
             };
             shader::pushUniforms(mainProgram, sizeof(programUniforms) / sizeof(GLchar*), programUniforms);
 
             glUseProgram(mainProgram.id);
             shader::setUniform(mainProgram, glUniform1i, "diffuseMap", 0);
+            shader::setUniform(mainProgram, glUniform1i, "specularMap", 1);
 
-            shader::bindUniformBlock(mainProgram, "CameraData", 0);
             shader::bindUniformBlock(mainProgram, "ModelData", 1);
             shader::bindUniformBlock(mainProgram, "LightData", 2);
         }
@@ -117,9 +120,22 @@ int main(int argc, char **args) {
 
         {
             GLint textureX, textureY, textureChannels;
-            stbi_uc* textureData = stbi_load(PROJECT_PATH "res/texture/kenney/png/Dark/texture_13.png", &textureX, &textureY, &textureChannels, 3);
+            stbi_uc* textureData = stbi_load(PROJECT_PATH "res/texture/learnopengl/container/diffuse.png", &textureX, &textureY, &textureChannels, 3);
 
             glBindTexture(GL_TEXTURE_2D, mainDiffuseMap);
+
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureX, textureY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
+            stbi_image_free(textureData);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glGenerateMipmap(GL_TEXTURE_2D);
+
+            textureData = stbi_load(PROJECT_PATH "res/texture/learnopengl/container/specular.png", &textureX, &textureY, &textureChannels, 3);
+
+            glBindTexture(GL_TEXTURE_2D, mainSpecularMap);
 
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureX, textureY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
             stbi_image_free(textureData);
@@ -140,7 +156,7 @@ int main(int argc, char **args) {
     {
         {
             GLint textureX, textureY, textureChannels;
-            stbi_uc* textureData = stbi_load(PROJECT_PATH "res/texture/concrete.png", &textureX, &textureY, &textureChannels, 3);
+            stbi_uc* textureData = stbi_load(PROJECT_PATH "res/texture/kenney/png/Dark/texture_13.png", &textureX, &textureY, &textureChannels, 3);
 
             glBindTexture(GL_TEXTURE_2D, batchDiffuseMap);
 
@@ -268,6 +284,9 @@ int main(int argc, char **args) {
 
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, mainDiffuseMap);
+                glActiveTexture(GL_TEXTURE0 + 1);
+                glBindTexture(GL_TEXTURE_2D, mainSpecularMap);
+
 
                 uniform::ModelData modelData(mainCubeData.position, mainCubeData.rotation, mainCubeData.scale);
                 glBindBuffer(GL_UNIFORM_BUFFER, u_modelData);
