@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #define PROJECT_PATH "/home/kayra/dev/cpp/rov-sim-env/"
