@@ -50,6 +50,17 @@ project(cmake-boilerplate)
         ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/debug/lib"
         ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/release/lib")
 
+#assimp.a
+    add_subdirectory("vendor/assimp")
+
+    set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
+    set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(ASSIMP_NO_EXPORT ON CACHE BOOL "" FORCE)
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
+    set_target_properties(assimp PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/debug/lib"
+        ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/release/lib")
 #main.out
     add_executable(main 
     src/gameobjects/object.cpp
@@ -65,7 +76,7 @@ project(cmake-boilerplate)
     src/main.cpp 
     )
 
-    target_link_libraries(main glad glfw spdlog imgui)
+    target_link_libraries(main glad glfw spdlog imgui assimp)
 
     target_include_directories(main PUBLIC
         "include/"
@@ -74,6 +85,7 @@ project(cmake-boilerplate)
         vendor/imgui 
         vendor/spdlog/include 
         vendor/stb 
+        vendor/assimp/include 
         vendor/glm)
 
     set_target_properties(main PROPERTIES
