@@ -14,10 +14,10 @@ struct PointLight {
     float falloffQ;
 };
 
-layout (std140) uniform LightData {
+layout (std140) uniform ActiveLights {
     PointLight pointLights[16];
     int pointLightCount;
-} lightData;
+} activeLights;
 
 layout (std140) uniform CameraData {
     mat4 viewMatrix;
@@ -46,18 +46,18 @@ void main() {
     vec3 lightAccum = vec3(0.0, 0.0, 0.0);
     
     for (int i = 0; i < 16; i++) {
-        if (i == lightData.pointLightCount) break;
+        if (i == activeLights.pointLightCount) break;
 
-        vec3 lightDir = normalize(lightData.pointLights[i].pos - fragData.pos);
+        vec3 lightDir = normalize(activeLights.pointLights[i].pos - fragData.pos);
         vec3 reflectionDir = reflect(-lightDir, fragData.normal);
         
-        vec3 ambientComponent = lightData.pointLights[i].ambientColor * lightData.pointLights[i].ambientIntensity;
+        vec3 ambientComponent = activeLights.pointLights[i].ambientColor * activeLights.pointLights[i].ambientIntensity;
 
         float diffuseIntensity = max(dot(fragData.normal, lightDir), 0.0);
-        vec3 diffuseComponent = lightData.pointLights[i].color * diffuseIntensity;
+        vec3 diffuseComponent = activeLights.pointLights[i].color * diffuseIntensity;
         
-        float specularIntensity = pow(max(dot(viewDir, reflectionDir), 0.0), specularShininess) * lightData.pointLights[i].specularIntensity;
-        vec3 specularComponent = lightData.pointLights[i].color * specularIntensity;
+        float specularIntensity = pow(max(dot(viewDir, reflectionDir), 0.0), specularShininess) * activeLights.pointLights[i].specularIntensity;
+        vec3 specularComponent = activeLights.pointLights[i].color * specularIntensity;
 
         lightAccum += (specularComponent + ambientComponent + diffuseComponent);
     }

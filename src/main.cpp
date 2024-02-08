@@ -9,6 +9,7 @@
 
 #include "gameobjects/camera.hpp"
 #include "gameobjects/object.hpp"
+#include "gameobjects/light.hpp"
 
 #include "gameobjects/components/texture.hpp"
 
@@ -19,8 +20,8 @@
 #include "renderer/uniforms/viewModel.hpp"
 #include "renderer/uniforms/light.hpp"
 
-#include "GLFW/glfw3.h"
 #include "glad/glad.h"
+#include "GLFW/glfw3.h"
 #include "spdlog/spdlog.h"
 #include "stb_image.h"
 #include "glm/glm.hpp"
@@ -104,19 +105,16 @@ int main(int argc, char **args) {
         {
             renderer::shader::compileProgram(mainProgram, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
 
-            const GLchar* programUniforms[] = { 
-                "diffuseMap", 
-                "specularMap",
-                "specularShininess"
-            };
+            const GLchar* programUniforms[] = { "diffuseMap", "specularMap", "specularShininess" };
             renderer::shader::pushUniforms(mainProgram, sizeof(programUniforms) / sizeof(GLchar*), programUniforms);
 
             glUseProgram(mainProgram.id);
             renderer::shader::setUniform(mainProgram, glUniform1i, "diffuseMap", 0);
             renderer::shader::setUniform(mainProgram, glUniform1i, "specularMap", 1);
 
+            renderer::shader::bindUniformBlock(mainProgram, "CameraData", 0);
             renderer::shader::bindUniformBlock(mainProgram, "ModelData", 1);
-            renderer::shader::bindUniformBlock(mainProgram, "LightData", 2);
+            renderer::shader::bindUniformBlock(mainProgram, "ActiveLights", 2);
         }
     }
 
@@ -137,21 +135,21 @@ int main(int argc, char **args) {
 
         renderer::shader::bindUniformBlock(batchProgram, "CameraData", 0);
         renderer::shader::bindUniformBlock(batchProgram, "ModelData", 1);
-        renderer::shader::bindUniformBlock(batchProgram, "LightData", 2);
+        renderer::shader::bindUniformBlock(batchProgram, "ActiveLights", 2);
     }
 
 // ! ||--------------------------------------------------------------------------------||
 // ! ||                                INITIALIZE SCENE                                ||
 // ! ||--------------------------------------------------------------------------------||
-    uniform::PointLight pointLight({ 0.f, 0.5f, 1.f, 1.f }, { 1.f, 0.9f, 0.9f, 1.f }, { -0.6f, 3.2f, -0.191f },
+    gameobject::light::Point pointLight({ 0.f, 0.5f, 1.f, 1.f }, { 1.f, 0.9f, 0.9f, 1.f }, { -0.6f, 3.2f, -0.191f },
         0.2f, 0.5f, 1.f, 1.f, 1.f);
-    uniform::PointLight pointLight2({ 0.8f, 0.2f, 0.f, 1.f }, { 1.f, 0.0f, 0.f, 1.f }, { -3.f, 4.f, -4.f },
+    gameobject::light::Point pointLight2({ 0.8f, 0.2f, 0.f, 1.f }, { 1.f, 0.0f, 0.f, 1.f }, { -3.f, 4.f, -4.f },
         0.2f, 0.5f, 1.f, 1.f, 1.f);
 
-    uniform::LightData lightData;
-    lightData.pointLights[0] = pointLight;
-    lightData.pointLights[1] = pointLight2;
-    lightData.pointLightCount = 2;
+    uniform::buffer::ActiveLights activeLights;
+    memcpy(&activeLights.pointLights[0], &pointLight, sizeof(uniform::PointLightBlock));
+    memcpy(&activeLights.pointLights[1], &pointLight2, sizeof(uniform::PointLightBlock));
+    activeLights.pointLightCount = 2;
 
     GLfloat specularShininess = 32.f;
 
@@ -227,12 +225,15 @@ int main(int argc, char **args) {
             else {
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             }
+            memcpy(&activeLights.pointLights[0], &pointLight, sizeof(uniform::PointLightBlock));
+            glBindBuffer(GL_UNIFORM_BUFFER, u_lightData);
+            glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::buffer::ActiveLights), &activeLights, GL_DYNAMIC_DRAW);
 
             mainCamera.framebufferWidth = app::window_vars.framebufferWidth;
             mainCamera.framebufferHeight = app::window_vars.framebufferHeight;
-            uniform::CameraData cameraMatrices(mainCamera);
+            uniform::buffer::CameraData cameraMatrices(mainCamera);
             glBindBuffer(GL_UNIFORM_BUFFER, u_cameraData);
-            glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::CameraData), &cameraMatrices, GL_DYNAMIC_DRAW);
+            glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::buffer::CameraData), &cameraMatrices, GL_DYNAMIC_DRAW);
 
             {
                 glUseProgram(mainProgram.id);
@@ -242,13 +243,9 @@ int main(int argc, char **args) {
                 renderer::texture::useTexture2D(mainDiffuseMap, GL_TEXTURE0);
                 renderer::texture::useTexture2D(mainSpecularMap, GL_TEXTURE0 + 1);
 
-                uniform::ModelData modelData(mainCubeData.position, mainCubeData.rotation, mainCubeData.scale);
+                uniform::buffer::ModelData modelData(mainCubeData.position, mainCubeData.rotation, mainCubeData.scale);
                 glBindBuffer(GL_UNIFORM_BUFFER, u_modelData);
-                glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::ModelData), &modelData, GL_DYNAMIC_DRAW);
-
-                lightData.pointLights[0] = pointLight;
-                glBindBuffer(GL_UNIFORM_BUFFER, u_lightData);
-                glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::LightData), &lightData, GL_DYNAMIC_DRAW);
+                glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::buffer::ModelData), &modelData, GL_DYNAMIC_DRAW);
 
                 renderer::shader::setUniform(mainProgram, glUniform1f, "specularShininess", specularShininess);
 
@@ -265,9 +262,9 @@ int main(int argc, char **args) {
                 renderer::shader::setUniform(batchProgram, glUniform1f, "mixWeight", 0.9f);
 
                 for(size_t i = 0; i < batchCubes.size(); i++) {
-                    uniform::ModelData modelData(batchCubes.at(i).position, batchCubes.at(i).rotation, batchCubes.at(i).scale);
+                    uniform::buffer::ModelData modelData(batchCubes.at(i).position, batchCubes.at(i).rotation, batchCubes.at(i).scale);
                     glBindBuffer(GL_UNIFORM_BUFFER, u_modelData);
-                    glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::ModelData), &modelData, GL_DYNAMIC_DRAW);
+                    glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::buffer::ModelData), &modelData, GL_DYNAMIC_DRAW);
                     
                     renderer::shader::setUniform(batchProgram, glUniform4fv, "mixColor", 1, batchCubes.at(i).mixColor);
 

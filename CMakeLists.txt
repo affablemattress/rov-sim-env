@@ -8,6 +8,9 @@ project(cmake-boilerplate)
         ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/debug/lib"
         ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/release/lib")
 
+    set_property(TARGET spdlog PROPERTY CXX_STANDARD 20)
+
+
 #imgui.a
     add_library(imgui STATIC 
         vendor/imgui/imgui.cpp
@@ -26,6 +29,8 @@ project(cmake-boilerplate)
     set_target_properties(imgui PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/debug/lib"
         ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/release/lib")
+    
+    set_property(TARGET imgui PROPERTY CXX_STANDARD 20)
 
 #glfw.a
     add_subdirectory("vendor/glfw")
@@ -39,6 +44,8 @@ project(cmake-boilerplate)
         ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/debug/lib"
         ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/release/lib")
 
+    set_property(TARGET glfw PROPERTY CXX_STANDARD 20)
+    
 #glad.a
     add_library(glad STATIC 
         vendor/glad/src/glad.c)
@@ -49,6 +56,8 @@ project(cmake-boilerplate)
     set_target_properties(glad PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/debug/lib"
         ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/release/lib")
+    
+    set_property(TARGET glad PROPERTY CXX_STANDARD 20)
 
 #assimp.a
     add_subdirectory("vendor/assimp")
@@ -61,6 +70,9 @@ project(cmake-boilerplate)
     set_target_properties(assimp PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/bin/debug/lib"
         ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/bin/release/lib")
+
+    set_property(TARGET glad PROPERTY CXX_STANDARD 20)
+
 #main.out
     add_executable(main 
     src/gameobjects/object.cpp
