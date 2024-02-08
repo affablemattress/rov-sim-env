@@ -1,4 +1,4 @@
-#include "shader.hpp"
+#include "shader/shader.hpp"
 
 #include "app.hpp"
 
@@ -58,5 +58,9 @@ namespace shader {
         for (size_t i = 0; i < sizeOfNames; i++){
             pushUniform(program, uniformNamesArray[i]);
         }
+    }
+
+    void bindUniformBlock(shader::Program& program, const GLchar* blockName, GLint bindIndex) {
+        glUniformBlockBinding(program.id, glGetUniformBlockIndex(program.id, blockName), bindIndex);
     }
 }

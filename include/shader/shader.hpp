@@ -26,4 +26,6 @@ namespace shader {
     void setUniform(shader::Program& program, F glUniformFunction, const GLchar* uniformName, V... args) {
         glUniformFunction(program.uniforms[uniformName], args...);
     }
+
+    void bindUniformBlock(shader::Program& program, const GLchar* blockName, GLint bindIndex);
 }

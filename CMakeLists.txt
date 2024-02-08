@@ -55,8 +55,8 @@ project(cmake-boilerplate)
     src/gameobjects/object.cpp
     src/gameobjects/camera.cpp
     src/render/shader.cpp 
-    src/glfw/callbackGLFW.cpp 
-    src/glfw/window.cpp
+    src/window/callbackGLFW.cpp 
+    src/window/window.cpp
     src/systems/gui.cpp
     src/systems/input.cpp
     src/app.cpp 

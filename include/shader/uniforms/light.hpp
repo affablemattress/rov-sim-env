@@ -2,7 +2,7 @@
 #pragma pack(1)
 
 #include "math.hpp"
-#include "camera.hpp"
+#include "gameobjects/camera.hpp"
 
 #include "glad/glad.h"
 #include "glm/glm.hpp"

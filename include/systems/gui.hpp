@@ -2,8 +2,8 @@
 
 #include "config.hpp"
 
-#include "object.hpp"
-#include "camera.hpp"
+#include "gameobjects/object.hpp"
+#include "gameobjects/camera.hpp"
 
 #include "glad/glad.h"
 #include "imgui.h"

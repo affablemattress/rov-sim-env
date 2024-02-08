@@ -1,7 +1,9 @@
-#include "camera.hpp"
-#include "window.hpp"
-#include "gui.hpp"
+#include "gameobjects/camera.hpp"
+
 #include "math.hpp"
+
+#include "window/window.hpp"
+#include "systems/gui.hpp"
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"

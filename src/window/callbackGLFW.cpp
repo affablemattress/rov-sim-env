@@ -1,10 +1,10 @@
-#include "callbackGLFW.hpp"
+#include "window/callbackGLFW.hpp"
 
 #include "app.hpp"
 
-#include "window.hpp"
-#include "camera.hpp"
-#include "input.hpp"
+#include "window/window.hpp"
+#include "gameobjects/camera.hpp"
+#include "systems/input.hpp"
 
 #include "glad/glad.h"
 #include "spdlog/spdlog.h"

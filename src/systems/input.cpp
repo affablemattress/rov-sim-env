@@ -1,8 +1,8 @@
-#include "input.hpp"
+#include "systems/input.hpp"
 
-#include "callbackGLFW.hpp"
 #include "math.hpp"
 #include "app.hpp"
+#include "window/callbackGLFW.hpp"
 
 namespace input {
     static input::References* refs;

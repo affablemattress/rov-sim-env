@@ -1,17 +1,20 @@
 #include "app.hpp"
-#include "callbackGLFW.hpp"
-#include "shader.hpp"
-#include "window.hpp"
-#include "camera.hpp"
-#include "gui.hpp"
 #include "math.hpp"
-#include "object.hpp"
-#include "input.hpp"
+
+#include "window/window.hpp"
+#include "window/callbackGLFW.hpp"
+
+#include "systems/gui.hpp"
+#include "systems/input.hpp"
+
+#include "gameobjects/camera.hpp"
+#include "gameobjects/object.hpp"
 
 #include "scene/cubeData.hpp"
 
-#include "shader/viewModel.hpp"
-#include "shader/light.hpp"
+#include "shader/shader.hpp"
+#include "shader/uniforms/viewModel.hpp"
+#include "shader/uniforms/light.hpp"
 
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
@@ -24,6 +27,9 @@
 #include <time.h>
 
 int main(int argc, char **args) {
+// ! ||--------------------------------------------------------------------------------||
+// ! ||                                 INITIALIZE APP                                 ||
+// ! ||--------------------------------------------------------------------------------||
     app::lifetime::startApp();
 
     app::lifetime::initSPDLOG(spdlog::level::level_enum::info, "Started rov-sim-env...");
@@ -37,34 +43,26 @@ int main(int argc, char **args) {
     app::lifetime::initGLAD();
     app::lifetime::initIMGUI(window);
 
-    /**
-     * INIT SCENE
-     */
     callbackGLFW::windowResize(window, 0, 0); // Call resize callback to set window vars
 
-    uniform::PointLight pointLight({ 0.f, 0.5f, 1.f, 1.f }, { 1.f, 0.9f, 0.9f, 1.f }, { -0.6f, 3.2f, -0.191f },
-        0.2f, 0.5f, 1.f, 1.f, 1.f);
-    uniform::PointLight pointLight2({ 0.8f, 0.2f, 0.f, 1.f }, { 1.f, 0.0f, 0.f, 1.f }, { -3.f, 4.f, -4.f },
-        0.2f, 0.5f, 1.f, 1.f, 1.f);
-
-    uniform::LightData lightData;
-    lightData.pointLights[0] = pointLight;
-    lightData.pointLights[1] = pointLight2;
-    lightData.pointLightCount = 2;
-
-    GLfloat specularShininess = 32.f;
-
+// ! ||--------------------------------------------------------------------------------||
+// ! ||                              INITIALIZE RENDERERER                             ||
+// ! ||--------------------------------------------------------------------------------||
     GLuint mainVBO = 0;
     glGenBuffers(1, &mainVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, mainVBO);
 
     GLuint mainEBO = 0;
     glGenBuffers(1, &mainEBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mainEBO);
 
     GLuint mainVAO = 0;
     glGenVertexArrays(1, &mainVAO);
+    glBindVertexArray(mainVAO);
 
     GLuint mainDiffuseMap = 0;
     glGenTextures(1, &mainDiffuseMap);
+    glBindTexture(GL_TEXTURE_2D, mainDiffuseMap);
 
     GLuint u_cameraData = 0, u_modelData = 0, u_lightData =0;
     glGenBuffers(1, &u_cameraData);
@@ -90,9 +88,9 @@ int main(int argc, char **args) {
             glUseProgram(mainProgram.id);
             shader::setUniform(mainProgram, glUniform1i, "diffuseMap", 0);
 
-            glUniformBlockBinding(mainProgram.id, glGetUniformBlockIndex(mainProgram.id, "CameraData"), 0);
-            glUniformBlockBinding(mainProgram.id, glGetUniformBlockIndex(mainProgram.id, "ModelData"), 1);
-            glUniformBlockBinding(mainProgram.id, glGetUniformBlockIndex(mainProgram.id, "LightData"), 2);
+            shader::bindUniformBlock(mainProgram, "CameraData", 0);
+            shader::bindUniformBlock(mainProgram, "ModelData", 1);
+            shader::bindUniformBlock(mainProgram, "LightData", 2);
         }
 
         {
@@ -121,11 +119,10 @@ int main(int argc, char **args) {
             GLint textureX, textureY, textureChannels;
             stbi_uc* textureData = stbi_load(PROJECT_PATH "res/texture/kenney/png/Dark/texture_13.png", &textureX, &textureY, &textureChannels, 3);
 
-            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, mainDiffuseMap);
 
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureX, textureY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
-            //stbi_image_free(textureData);
+            stbi_image_free(textureData);
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -145,11 +142,10 @@ int main(int argc, char **args) {
             GLint textureX, textureY, textureChannels;
             stbi_uc* textureData = stbi_load(PROJECT_PATH "res/texture/concrete.png", &textureX, &textureY, &textureChannels, 3);
 
-            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, batchDiffuseMap);
 
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureX, textureY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
-            //stbi_image_free(textureData);
+            stbi_image_free(textureData);
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -161,17 +157,33 @@ int main(int argc, char **args) {
         {
             shader::compileProgram(batchProgram, PROJECT_PATH "res/shader/vertexBatch.glsl", PROJECT_PATH "res/shader/fragmentBatch.glsl");
 
+            glUseProgram(batchProgram.id);
+
             const GLchar* programUniforms[] = { "mixColor", "mixWeight", "diffuseMap"};
             shader::pushUniforms(batchProgram,  sizeof(programUniforms) / sizeof(GLchar*), programUniforms);
 
-            glUseProgram(batchProgram.id);
             shader::setUniform(batchProgram, glUniform1i, "diffuseMap", 0);
 
-            glUniformBlockBinding(batchProgram.id, glGetUniformBlockIndex(batchProgram.id, "CameraData"), 0);
-            glUniformBlockBinding(batchProgram.id, glGetUniformBlockIndex(batchProgram.id, "ModelData"), 1);
-            glUniformBlockBinding(batchProgram.id, glGetUniformBlockIndex(batchProgram.id, "LightData"), 2);
+            shader::bindUniformBlock(batchProgram, "CameraData", 0);
+            shader::bindUniformBlock(batchProgram, "ModelData", 1);
+            shader::bindUniformBlock(batchProgram, "LightData", 2);
         }
     }
+
+// ! ||--------------------------------------------------------------------------------||
+// ! ||                                INITIALIZE SCENE                                ||
+// ! ||--------------------------------------------------------------------------------||
+    uniform::PointLight pointLight({ 0.f, 0.5f, 1.f, 1.f }, { 1.f, 0.9f, 0.9f, 1.f }, { -0.6f, 3.2f, -0.191f },
+        0.2f, 0.5f, 1.f, 1.f, 1.f);
+    uniform::PointLight pointLight2({ 0.8f, 0.2f, 0.f, 1.f }, { 1.f, 0.0f, 0.f, 1.f }, { -3.f, 4.f, -4.f },
+        0.2f, 0.5f, 1.f, 1.f, 1.f);
+
+    uniform::LightData lightData;
+    lightData.pointLights[0] = pointLight;
+    lightData.pointLights[1] = pointLight2;
+    lightData.pointLightCount = 2;
+
+    GLfloat specularShininess = 32.f;
 
     camera::Object mainCamera = { 
         .framebufferClearColor = { 0.92f, 0.92f, 0.92f, 1.0f },
@@ -190,6 +202,9 @@ int main(int argc, char **args) {
 
     std::vector<object::BatchCube> batchCubes;
 
+// ! ||--------------------------------------------------------------------------------||
+// ! ||                              SET SYSTEM REFERENCES                             ||
+// ! ||--------------------------------------------------------------------------------||
     gui::References guiRefs = {
         .camera = &mainCamera,
         .mainCube = &mainCubeData,

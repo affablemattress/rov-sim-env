@@ -1,4 +1,4 @@
-#include "object.hpp"
+#include "gameobjects/object.hpp"
 
 #include <random>
 #include <time.h>
