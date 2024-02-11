@@ -2,12 +2,20 @@
 
 #include "config.hpp"
 
-#include "gameobjects/components/texture.hpp"
-
 #include "glad/glad.h"
 
+#include <string>
+
+namespace component {
+}
+
 namespace renderer {
-    namespace texture {
-        void useTexture2D(component::texture::Data& texture, GLuint imageUnitIndex);
-    }
+    struct Texture2D {
+        GLuint textureBufferID;
+        std::string filepath;
+
+        Texture2D(const std::string& filepath);
+    };
+
+    void useTexture2D(renderer::Texture2D& texture, GLuint imageUnitIndex);
 }

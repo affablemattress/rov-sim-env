@@ -77,8 +77,8 @@ project(cmake-boilerplate)
     add_executable(main 
     src/gameobjects/object.cpp
     src/gameobjects/camera.cpp
-    src/gameobjects/components/texture.cpp
     src/renderer/texture.cpp 
+    src/renderer/mesh.cpp 
     src/renderer/shader.cpp 
     src/window/callbackGLFW.cpp 
     src/window/window.cpp

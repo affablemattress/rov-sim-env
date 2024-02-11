@@ -1,3 +1,5 @@
+#include "config.hpp"
+
 #include "app.hpp"
 #include "math.hpp"
 
@@ -11,12 +13,11 @@
 #include "gameobjects/object.hpp"
 #include "gameobjects/light.hpp"
 
-#include "gameobjects/components/texture.hpp"
-
 #include "scene/cubeData.hpp"
 
 #include "renderer/texture.hpp"
 #include "renderer/shader.hpp"
+#include "renderer/mesh.hpp"
 #include "renderer/uniforms/viewModel.hpp"
 #include "renderer/uniforms/light.hpp"
 
@@ -52,23 +53,17 @@ int main(int argc, char **args) {
 // ! ||--------------------------------------------------------------------------------||
 // ! ||                              INITIALIZE RENDERERER                             ||
 // ! ||--------------------------------------------------------------------------------||
-    GLuint mainVBO = 0;
-    glGenBuffers(1, &mainVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, mainVBO);
+    renderer::VBO mainVBO(sizeof(cubeVertices), cubeVertices);
 
-    GLuint mainEBO = 0;
-    glGenBuffers(1, &mainEBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mainEBO);
+    renderer::EBO mainEBO(sizeof(cubeIndices), cubeIndices);
 
-    GLuint mainVAO = 0;
-    glGenVertexArrays(1, &mainVAO);
-    glBindVertexArray(mainVAO);
+    size_t attributes[] = { 3, 3, 2 };
+    renderer::VAO mainVAO(mainVBO, mainEBO, 3, attributes);
 
-    component::texture::Data mainDiffuseMap, mainSpecularMap;
-    component::texture::loadTexture2D(mainDiffuseMap, PROJECT_PATH "res/texture/learnopengl/container/diffuse.png");
-    component::texture::loadTexture2D(mainSpecularMap, PROJECT_PATH "res/texture/learnopengl/container/specular.png");
+    renderer::Texture2D mainDiffuseMap(PROJECT_PATH "res/texture/learnopengl/container/diffuse.png");
+    renderer::Texture2D mainSpecularMap(PROJECT_PATH "res/texture/learnopengl/container/specular.png");
 
-    GLuint u_cameraData = 0, u_modelData = 0, u_lightData =0;
+    GLuint u_cameraData = 0, u_modelData = 0, u_lightData = 0;
     glGenBuffers(1, &u_cameraData);
     glGenBuffers(1, &u_modelData);
     glGenBuffers(1, &u_lightData);
@@ -80,46 +75,21 @@ int main(int argc, char **args) {
     renderer::shader::Program mainProgram;
     mainProgram.id = glCreateProgram();
     {
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, mainVBO);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+        renderer::shader::compileProgram(mainProgram, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
 
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mainEBO);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIndices), cubeIndices, GL_STATIC_DRAW);
-        }
+        const GLchar* programUniforms[] = { "diffuseMap", "specularMap", "specularShininess" };
+        renderer::shader::pushUniforms(mainProgram, sizeof(programUniforms) / sizeof(GLchar*), programUniforms);
 
-        {
-            glBindVertexArray(mainVAO);
-            {
-                glBindBuffer(GL_ARRAY_BUFFER, mainVBO);
-                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
-                glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3*sizeof(float)));
-                glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6*sizeof(float)));
-                glEnableVertexAttribArray(0);
-                glEnableVertexAttribArray(1);
-                glEnableVertexAttribArray(2);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mainEBO);
-            }
-        }
+        glUseProgram(mainProgram.id);
+        renderer::shader::setUniform(mainProgram, glUniform1i, "diffuseMap", 0);
+        renderer::shader::setUniform(mainProgram, glUniform1i, "specularMap", 1);
 
-        {
-            renderer::shader::compileProgram(mainProgram, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
-
-            const GLchar* programUniforms[] = { "diffuseMap", "specularMap", "specularShininess" };
-            renderer::shader::pushUniforms(mainProgram, sizeof(programUniforms) / sizeof(GLchar*), programUniforms);
-
-            glUseProgram(mainProgram.id);
-            renderer::shader::setUniform(mainProgram, glUniform1i, "diffuseMap", 0);
-            renderer::shader::setUniform(mainProgram, glUniform1i, "specularMap", 1);
-
-            renderer::shader::bindUniformBlock(mainProgram, "CameraData", 0);
-            renderer::shader::bindUniformBlock(mainProgram, "ModelData", 1);
-            renderer::shader::bindUniformBlock(mainProgram, "ActiveLights", 2);
-        }
+        renderer::shader::bindUniformBlock(mainProgram, "CameraData", 0);
+        renderer::shader::bindUniformBlock(mainProgram, "ModelData", 1);
+        renderer::shader::bindUniformBlock(mainProgram, "ActiveLights", 2);
     }
 
-    component::texture::Data batchDiffuseMap;
-    component::texture::loadTexture2D(batchDiffuseMap, PROJECT_PATH "res/texture/kenney/png/Dark/texture_13.png");
+    renderer::Texture2D batchDiffuseMap(PROJECT_PATH "res/texture/kenney/png/Dark/texture_13.png");
 
     renderer::shader::Program batchProgram;
     batchProgram.id = glCreateProgram();
@@ -237,11 +207,10 @@ int main(int argc, char **args) {
 
             {
                 glUseProgram(mainProgram.id);
+                glBindVertexArray(mainVAO.bufferID);
 
-                glBindVertexArray(mainVAO);
-
-                renderer::texture::useTexture2D(mainDiffuseMap, GL_TEXTURE0);
-                renderer::texture::useTexture2D(mainSpecularMap, GL_TEXTURE0 + 1);
+                renderer::useTexture2D(mainDiffuseMap, GL_TEXTURE0);
+                renderer::useTexture2D(mainSpecularMap, GL_TEXTURE0 + 1);
 
                 uniform::buffer::ModelData modelData(mainCubeData.position, mainCubeData.rotation, mainCubeData.scale);
                 glBindBuffer(GL_UNIFORM_BUFFER, u_modelData);
@@ -255,9 +224,9 @@ int main(int argc, char **args) {
             {
                 glUseProgram(batchProgram.id);
 
-                glBindVertexArray(mainVAO);
+                glBindVertexArray(mainVAO.bufferID);
 
-                renderer::texture::useTexture2D(batchDiffuseMap, GL_TEXTURE0);
+                renderer::useTexture2D(batchDiffuseMap, GL_TEXTURE0);
 
                 renderer::shader::setUniform(batchProgram, glUniform1f, "mixWeight", 0.9f);
 
