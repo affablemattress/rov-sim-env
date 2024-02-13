@@ -31,17 +31,18 @@
 #include <stdlib.h>
 #include <time.h>
 
-int main(int argc, char **args) {
-// ! ||--------------------------------------------------------------------------------||
-// ! ||                                 INITIALIZE APP                                 ||
-// ! ||--------------------------------------------------------------------------------||
+int main(int argc, char **args)
+{
+    // ! ||--------------------------------------------------------------------------------||
+    // ! ||                                 INITIALIZE APP                                 ||
+    // ! ||--------------------------------------------------------------------------------||
     app::lifetime::startApp();
 
     app::lifetime::initSPDLOG(spdlog::level::level_enum::info, "Started rov-sim-env...");
     app::lifetime::initSTBI();
     app::lifetime::initGLFW(callbackGLFW::error, "GLFW init.");
 
-    GLFWwindow* window = window::createWindow(app::settings.defaultWindowWidth, app::settings.defaultWindowHeight, "rov-sim-env");
+    GLFWwindow *window = window::createWindow(app::settings.defaultWindowWidth, app::settings.defaultWindowHeight, "rov-sim-env");
     window::configureWindowAndSetContext(window, app::settings.defaultWindowWidth, app::settings.defaultWindowHeight);
     callbackGLFW::setWindowCallbacks(window);
 
@@ -50,15 +51,11 @@ int main(int argc, char **args) {
 
     callbackGLFW::windowResize(window, 0, 0); // Call resize callback to set window vars
 
-// ! ||--------------------------------------------------------------------------------||
-// ! ||                              INITIALIZE RENDERERER                             ||
-// ! ||--------------------------------------------------------------------------------||
-    renderer::VBO mainVBO(sizeof(cubeVertices), cubeVertices);
-
-    renderer::EBO mainEBO(sizeof(cubeIndices), cubeIndices);
-
-    size_t attributes[] = { 3, 3, 2 };
-    renderer::VAO mainVAO(mainVBO, mainEBO, 3, attributes);
+    // ! ||--------------------------------------------------------------------------------||
+    // ! ||                              INITIALIZE RENDERERER                             ||
+    // ! ||--------------------------------------------------------------------------------||
+    size_t attributes[] = {3, 3, 2};
+    renderer::Mesh mainMesh(sizeof(cubeVertices), cubeVertices, sizeof(cubeIndices), cubeIndices, sizeof(attributes) / sizeof(size_t), attributes);
 
     renderer::Texture2D mainDiffuseMap(PROJECT_PATH "res/texture/learnopengl/container/diffuse.png");
     renderer::Texture2D mainSpecularMap(PROJECT_PATH "res/texture/learnopengl/container/specular.png");
@@ -71,16 +68,12 @@ int main(int argc, char **args) {
     glBindBufferBase(GL_UNIFORM_BUFFER, 1, u_modelData);
     glBindBufferBase(GL_UNIFORM_BUFFER, 2, u_lightData);
 
-
-    renderer::shader::Program mainProgram;
-    mainProgram.id = glCreateProgram();
+    renderer::shader::Program mainProgram(PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
     {
-        renderer::shader::compileProgram(mainProgram, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
+        const GLchar *programUniforms[] = {"diffuseMap", "specularMap", "specularShininess"};
+        renderer::shader::pushUniforms(mainProgram, sizeof(programUniforms) / sizeof(GLchar *), programUniforms);
 
-        const GLchar* programUniforms[] = { "diffuseMap", "specularMap", "specularShininess" };
-        renderer::shader::pushUniforms(mainProgram, sizeof(programUniforms) / sizeof(GLchar*), programUniforms);
-
-        glUseProgram(mainProgram.id);
+        renderer::useProgram(mainProgram);
         renderer::shader::setUniform(mainProgram, glUniform1i, "diffuseMap", 0);
         renderer::shader::setUniform(mainProgram, glUniform1i, "specularMap", 1);
 
@@ -91,15 +84,12 @@ int main(int argc, char **args) {
 
     renderer::Texture2D batchDiffuseMap(PROJECT_PATH "res/texture/kenney/png/Dark/texture_13.png");
 
-    renderer::shader::Program batchProgram;
-    batchProgram.id = glCreateProgram();
+    renderer::shader::Program batchProgram(PROJECT_PATH "res/shader/vertexBatch.glsl", PROJECT_PATH "res/shader/fragmentBatch.glsl");
     {
-        renderer::shader::compileProgram(batchProgram, PROJECT_PATH "res/shader/vertexBatch.glsl", PROJECT_PATH "res/shader/fragmentBatch.glsl");
+        const GLchar *programUniforms[] = {"mixColor", "mixWeight", "diffuseMap"};
+        renderer::shader::pushUniforms(batchProgram, sizeof(programUniforms) / sizeof(GLchar *), programUniforms);
 
-        glUseProgram(batchProgram.id);
-
-        const GLchar* programUniforms[] = { "mixColor", "mixWeight", "diffuseMap"};
-        renderer::shader::pushUniforms(batchProgram,  sizeof(programUniforms) / sizeof(GLchar*), programUniforms);
+        renderer::useProgram(batchProgram);
 
         renderer::shader::setUniform(batchProgram, glUniform1i, "diffuseMap", 0);
 
@@ -108,13 +98,13 @@ int main(int argc, char **args) {
         renderer::shader::bindUniformBlock(batchProgram, "ActiveLights", 2);
     }
 
-// ! ||--------------------------------------------------------------------------------||
-// ! ||                                INITIALIZE SCENE                                ||
-// ! ||--------------------------------------------------------------------------------||
-    gameobject::light::Point pointLight({ 0.f, 0.5f, 1.f, 1.f }, { 1.f, 0.9f, 0.9f, 1.f }, { -0.6f, 3.2f, -0.191f },
-        0.2f, 0.5f, 1.f, 1.f, 1.f);
-    gameobject::light::Point pointLight2({ 0.8f, 0.2f, 0.f, 1.f }, { 1.f, 0.0f, 0.f, 1.f }, { -3.f, 4.f, -4.f },
-        0.2f, 0.5f, 1.f, 1.f, 1.f);
+    // ! ||--------------------------------------------------------------------------------||
+    // ! ||                                INITIALIZE SCENE                                ||
+    // ! ||--------------------------------------------------------------------------------||
+    gameobject::light::Point pointLight({0.f, 0.5f, 1.f, 1.f}, {1.f, 0.9f, 0.9f, 1.f}, {-0.6f, 3.2f, -0.191f},
+                                        0.2f, 0.5f, 1.f, 1.f, 1.f);
+    gameobject::light::Point pointLight2({0.8f, 0.2f, 0.f, 1.f}, {1.f, 0.0f, 0.f, 1.f}, {-3.f, 4.f, -4.f},
+                                         0.2f, 0.5f, 1.f, 1.f, 1.f);
 
     uniform::buffer::ActiveLights activeLights;
     memcpy(&activeLights.pointLights[0], &pointLight, sizeof(uniform::PointLightBlock));
@@ -123,26 +113,25 @@ int main(int argc, char **args) {
 
     GLfloat specularShininess = 32.f;
 
-    camera::Object mainCamera = { 
-        .framebufferClearColor = { 0.92f, 0.92f, 0.92f, 1.0f },
-        .position = { 2.f, 2.0f, 2.0f },
-        .rotation = { 135.f, -45.f },
+    camera::Object mainCamera = {
+        .framebufferClearColor = {0.92f, 0.92f, 0.92f, 1.0f},
+        .position = {2.f, 2.0f, 2.0f},
+        .rotation = {135.f, -45.f},
         .fov = 75,
         .framebufferWidth = app::window_vars.framebufferWidth,
-        .framebufferHeight = app::window_vars.framebufferHeight
-    };
+        .framebufferHeight = app::window_vars.framebufferHeight};
 
     object::MainCube mainCubeData = {
         .position = {0.f, 0.f, 0.f},
-        .rotation = { 30.f, 60.f, 0.f},
-        .scale = { 1.f, 1.f, 1.f },
+        .rotation = {30.f, 60.f, 0.f},
+        .scale = {1.f, 1.f, 1.f},
     };
 
     std::vector<object::BatchCube> batchCubes;
 
-// ! ||--------------------------------------------------------------------------------||
-// ! ||                              SET SYSTEM REFERENCES                             ||
-// ! ||--------------------------------------------------------------------------------||
+    // ! ||--------------------------------------------------------------------------------||
+    // ! ||                              SET SYSTEM REFERENCES                             ||
+    // ! ||--------------------------------------------------------------------------------||
     gui::References guiRefs = {
         .camera = &mainCamera,
         .mainCube = &mainCubeData,
@@ -155,8 +144,7 @@ int main(int argc, char **args) {
         .specularStrength = &pointLight.specularIntensity,
 
         .ambientLightIntensity = &pointLight.ambientIntensity,
-        .ambientLightColor = glm::value_ptr(pointLight.ambientColor)
-    };
+        .ambientLightColor = glm::value_ptr(pointLight.ambientColor)};
     gui::registerRefs(&guiRefs);
 
     input::References inputRefs = {
@@ -167,12 +155,13 @@ int main(int argc, char **args) {
     if (glfwRawMouseMotionSupported())
         glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
-// ! ||--------------------------------------------------------------------------------||
-// ! ||                                    GAME LOOP                                   ||
-// ! ||--------------------------------------------------------------------------------||
+    // ! ||--------------------------------------------------------------------------------||
+    // ! ||                                    GAME LOOP                                   ||
+    // ! ||--------------------------------------------------------------------------------||
     double prevFrameTime = 0.;
     double currentFrameTime = 0.;
-    while (1) {
+    while (1)
+    {
         currentFrameTime = glfwGetTime();
         app::window_vars.frametime = currentFrameTime - prevFrameTime;
         prevFrameTime = currentFrameTime;
@@ -189,25 +178,29 @@ int main(int argc, char **args) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glEnable(GL_DEPTH_TEST);
 
-            if(app::state_vars.isWireframe) {
+            if (app::state_vars.isWireframe)
+            {
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             }
-            else {
+            else
+            {
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             }
-            memcpy(&activeLights.pointLights[0], &pointLight, sizeof(uniform::PointLightBlock));
+            memcpy(&activeLights.pointLights[0], &pointLight, sizeof(gameobject::light::Point));
             glBindBuffer(GL_UNIFORM_BUFFER, u_lightData);
             glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::buffer::ActiveLights), &activeLights, GL_DYNAMIC_DRAW);
 
             mainCamera.framebufferWidth = app::window_vars.framebufferWidth;
             mainCamera.framebufferHeight = app::window_vars.framebufferHeight;
+
             uniform::buffer::CameraData cameraMatrices(mainCamera);
             glBindBuffer(GL_UNIFORM_BUFFER, u_cameraData);
             glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::buffer::CameraData), &cameraMatrices, GL_DYNAMIC_DRAW);
 
             {
-                glUseProgram(mainProgram.id);
-                glBindVertexArray(mainVAO.bufferID);
+                renderer::useProgram(mainProgram);
+
+                renderer::useMesh(mainMesh);
 
                 renderer::useTexture2D(mainDiffuseMap, GL_TEXTURE0);
                 renderer::useTexture2D(mainSpecularMap, GL_TEXTURE0 + 1);
@@ -222,20 +215,13 @@ int main(int argc, char **args) {
             }
 
             {
-                glUseProgram(batchProgram.id);
+                renderer::useProgram(mainProgram);
 
-                glBindVertexArray(mainVAO.bufferID);
-
-                renderer::useTexture2D(batchDiffuseMap, GL_TEXTURE0);
-
-                renderer::shader::setUniform(batchProgram, glUniform1f, "mixWeight", 0.9f);
-
-                for(size_t i = 0; i < batchCubes.size(); i++) {
+                for (size_t i = 0; i < batchCubes.size(); i++)
+                {
                     uniform::buffer::ModelData modelData(batchCubes.at(i).position, batchCubes.at(i).rotation, batchCubes.at(i).scale);
                     glBindBuffer(GL_UNIFORM_BUFFER, u_modelData);
                     glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::buffer::ModelData), &modelData, GL_DYNAMIC_DRAW);
-                    
-                    renderer::shader::setUniform(batchProgram, glUniform4fv, "mixColor", 1, batchCubes.at(i).mixColor);
 
                     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (void *)0);
                 }
@@ -246,7 +232,8 @@ int main(int argc, char **args) {
 
         glfwSwapBuffers(window);
 
-        if (glfwWindowShouldClose(window)) {
+        if (glfwWindowShouldClose(window))
+        {
             break;
         }
     }

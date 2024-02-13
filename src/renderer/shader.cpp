@@ -55,6 +55,11 @@ namespace renderer{
             program.uniforms[uniformName] = glGetUniformLocation(program.id, uniformName);
         }
 
+        Program::Program(std::string_view vertexShaderPath, std::string_view fragmentShaderPath) {
+            id = glCreateProgram();
+            renderer::shader::compileProgram(*this, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
+        }
+
         void pushUniforms(shader::Program& program, size_t sizeOfNames, const GLchar** uniformNamesArray) {
             for (size_t i = 0; i < sizeOfNames; i++){
                 pushUniform(program, uniformNamesArray[i]);
@@ -64,5 +69,9 @@ namespace renderer{
         void bindUniformBlock(shader::Program& program, const GLchar* blockName, GLint bindIndex) {
             glUniformBlockBinding(program.id, glGetUniformBlockIndex(program.id, blockName), bindIndex);
         }
+    }
+
+    void useProgram(const shader::Program& program) {
+        glUseProgram(program.id);
     }
 }

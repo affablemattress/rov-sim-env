@@ -84,11 +84,11 @@ void main() {
         
         vec3 ambientComponent = activeLights.pointLights[i].ambientColor * activeLights.pointLights[i].ambientIntensity;
 
-        float diffuseIntensity = max(dot(fragData.normal, lightDir), 0.0);
-        vec3 diffuseComponent = activeLights.pointLights[i].color * diffuseIntensity;
+        float diffuseStrength = max(dot(fragData.normal, lightDir), 0.0);
+        vec3 diffuseComponent = activeLights.pointLights[i].color * diffuseStrength;
         
-        float specularIntensity = pow(max(dot(viewDir, reflectionDir), 0.0), specularShininess) * activeLights.pointLights[i].specularIntensity;
-        vec3 specularComponent = activeLights.pointLights[i].color * specularIntensity * vec3(texture(specularMap, fragData.UV));
+        float specularStrength = pow(max(dot(viewDir, reflectionDir), 0.0), specularShininess) * activeLights.pointLights[i].specularIntensity;
+        vec3 specularComponent = activeLights.pointLights[i].color * specularStrength * vec3(texture(specularMap, fragData.UV));
 
         lightAccum += (specularComponent + ambientComponent + diffuseComponent);
     }

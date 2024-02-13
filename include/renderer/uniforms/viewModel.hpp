@@ -15,6 +15,8 @@ namespace uniform {
             glm::mat4 projectionMatrix;
             glm::vec3 pos;
 
+            float padding[1];
+
             CameraData() = delete;
             /// @brief Generates the view and projection matrices in place.
             /// @param camera 
@@ -41,3 +43,5 @@ namespace uniform {
         };
     }
 }
+
+#pragma pack()

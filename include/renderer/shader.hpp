@@ -16,6 +16,8 @@ namespace renderer{
         struct Program {
             GLuint id;
             std::unordered_map<std::string, GLint> uniforms;
+
+            Program(std::string_view vertexShaderPath, std::string_view fragmentShaderPath);
         };
 
         void compileProgram(shader::Program& program, const char* vertexShaderPath, const char* fragmentShaderPath);
@@ -30,4 +32,6 @@ namespace renderer{
 
         void bindUniformBlock(shader::Program& program, const GLchar* blockName, GLint bindIndex);
     }
+
+    void useProgram(const shader::Program& program);
 }

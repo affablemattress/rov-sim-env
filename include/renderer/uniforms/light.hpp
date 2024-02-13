@@ -1,6 +1,6 @@
 #pragma once
+#pragma pack(1)
 
-#pragma pack(1) 
 #include "math.hpp"
 #include "gameobjects/camera.hpp"
 
@@ -37,6 +37,7 @@ namespace uniform {
                   falloffC(falloffC), falloffP(falloffP), falloffQ(falloffQ) { };
     };
 
+#pragma pack(1)
     namespace buffer {
         struct ActiveLights {
             uniform::PointLightBlock pointLights[16];

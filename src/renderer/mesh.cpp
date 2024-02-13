@@ -31,4 +31,15 @@ namespace renderer {
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer.bufferID);
     }
+
+    Mesh::Mesh(size_t sizeOfVertexBuffer, const GLfloat* vertexBuffer,
+               size_t sizeOfElementBuffer, const GLuint* elementBuffer,
+               size_t numberOfVertexAttributes, const size_t vertexAttributeSizeList[]) : 
+               VBO(sizeOfVertexBuffer, vertexBuffer), 
+               EBO(sizeOfElementBuffer, elementBuffer),
+               VAO(this->VBO, this->EBO, numberOfVertexAttributes, vertexAttributeSizeList) {}
+
+    void useMesh(const Mesh& mesh) {
+        glBindVertexArray(mesh.VAO.bufferID);
+    }
 }

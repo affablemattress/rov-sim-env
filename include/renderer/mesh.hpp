@@ -10,14 +10,6 @@
 #include <vector>
 
 namespace renderer {
-    #pragma pack(1)
-    struct Vertex {
-        glm::vec3 pos;
-        glm::vec3 normal;
-        glm::vec2 UV;
-    };
-    #pragma pack()
-
     struct VBO {
         GLuint bufferID;
 
@@ -39,9 +31,16 @@ namespace renderer {
         VAO(VBO& vertexBuffer, EBO& elementBuffer, size_t numberOfAttributes, const size_t attributeSizeList[]);
     };
 
+    
     struct Mesh {
         renderer::VBO VBO;
         renderer::EBO EBO;
         renderer::VAO VAO;
+
+        Mesh(size_t sizeOfVertexBuffer, const GLfloat* vertexBuffer, 
+             size_t sizeOfElementBuffer, const GLuint* elementBuffer,
+             size_t numberOfVertexAttributes, const size_t vertexAttributeSizeList[]);
     };
+
+    void useMesh(const Mesh& vao);
 }

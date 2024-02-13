@@ -53,7 +53,7 @@ namespace gui {
             if(ImGui::TreeNode("BATCH")) {
                 ImGui::SeparatorText("Operations");
                 if(ImGui::Button("Push Random Object")) {
-                    refs->batchCubes->push_back(object::generateRandomBatchCube(-3.f , 1.5f, .5f, 0.1f));
+                    refs->batchCubes->push_back(object::generateRandomBatchCube(-3.f , 1.5f, 1.f, 0.f));
                 }; ImGui::SameLine(); if(ImGui::Button("Pop Object")) {
                     if(refs->batchCubes->size() > 0)
                         refs->batchCubes->pop_back();
