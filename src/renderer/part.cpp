@@ -3,13 +3,13 @@
 namespace renderer {
     Part::Part(math::TransformMatrix* localTransformMatrix, renderer::Mesh* mesh, 
                renderer::Texture2D* diffuseMap, renderer::Texture2D* specularMap, renderer::Texture2D* normalMap, 
-               renderer::shader::Program* shader) : 
+               renderer::Shader* shader) : 
                    localTransformMatrix(localTransformMatrix), mesh(mesh), 
                    diffuseMap(diffuseMap), specularMap(specularMap), normalMap(normalMap),
                    shader(shader) {}
 
-    void attachPart(const renderer::Part& part) {
-        renderer::useProgram(*part.shader);
+    void usePart(const renderer::Part& part) {
+        renderer::useShader(*part.shader);
 
         renderer::useMesh(*part.mesh);
 

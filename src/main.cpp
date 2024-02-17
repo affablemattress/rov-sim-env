@@ -19,6 +19,7 @@
 #include "renderer/shader.hpp"
 #include "renderer/mesh.hpp"
 #include "renderer/part.hpp"
+
 #include "renderer/uniforms/viewModel.hpp"
 #include "renderer/uniforms/light.hpp"
 
@@ -55,7 +56,6 @@ int main(int argc, char **args)
 // ! ||--------------------------------------------------------------------------------||
 // ! ||                           INITIALIZE UNIFORM BUFFERS                           ||
 // ! ||--------------------------------------------------------------------------------||
-
     GLuint u_cameraData = 0, u_modelData = 0, u_lightData = 0;
     glGenBuffers(1, &u_cameraData);
     glGenBuffers(1, &u_modelData);
@@ -63,6 +63,17 @@ int main(int argc, char **args)
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, u_cameraData);
     glBindBufferBase(GL_UNIFORM_BUFFER, 1, u_modelData);
     glBindBufferBase(GL_UNIFORM_BUFFER, 2, u_lightData);
+
+// ! ||--------------------------------------------------------------------------------||
+// ! ||                               INITIALIZE SHADERS                               ||
+// ! ||--------------------------------------------------------------------------------||
+    const GLchar *mainShaderUniformNames[] = { "diffuseMap", "specularMap", "specularShininess" };
+    const GLchar *mainShaderUniformBlockNames[] = { "CameraData", "ModelData", "ActiveLights" };
+    const GLint mainShaderUniformBlockBindingPoints[] = { 0, 1, 2 };
+
+    renderer::Shader mainShader(PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl", 
+                                sizeof(mainShaderUniformNames) / sizeof(GLchar*), mainShaderUniformNames,
+                                sizeof(mainShaderUniformBlockNames) / sizeof(GLchar*), mainShaderUniformBlockNames, mainShaderUniformBlockBindingPoints);
 
     // ! ||--------------------------------------------------------------------------------||
     // ! ||                              --INITIALIZE PARTS---                             ||
@@ -73,19 +84,9 @@ int main(int argc, char **args)
     renderer::Texture2D mainDiffuseMap(PROJECT_PATH "res/texture/learnopengl/container/diffuse.png");
     renderer::Texture2D mainSpecularMap(PROJECT_PATH "res/texture/learnopengl/container/specular.png");
 
-    renderer::shader::Program mainShader(PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
-    {
-        const GLchar *programUniforms[] = {"diffuseMap", "specularMap", "specularShininess"};
-        renderer::shader::pushUniforms(mainShader, sizeof(programUniforms) / sizeof(GLchar *), programUniforms);
-
-        renderer::useProgram(mainShader);
-        renderer::shader::setUniform(mainShader, glUniform1i, "diffuseMap", 0);
-        renderer::shader::setUniform(mainShader, glUniform1i, "specularMap", 1);
-
-        renderer::shader::bindUniformBlock(mainShader, "CameraData", 0);
-        renderer::shader::bindUniformBlock(mainShader, "ModelData", 1);
-        renderer::shader::bindUniformBlock(mainShader, "ActiveLights", 2);
-    }
+    renderer::useShader(mainShader);
+    renderer::setUniform(mainShader, glUniform1i, "diffuseMap", 0);
+    renderer::setUniform(mainShader, glUniform1i, "specularMap", 1);
 
     renderer::Part cubePart(&math::identityTransformMatrix, &mainMesh,
                             &mainDiffuseMap, &mainSpecularMap, &mainSpecularMap,
@@ -99,9 +100,9 @@ int main(int argc, char **args)
     gameobject::light::Point pointLight2({0.8f, 0.2f, 0.f, 1.f}, {1.f, 0.0f, 0.f, 1.f}, {-3.f, 4.f, -4.f},
                                          0.2f, 0.5f, 1.f, 1.f, 1.f);
 
-    uniform::buffer::ActiveLights activeLights;
-    memcpy(&activeLights.pointLights[0], &pointLight, sizeof(uniform::PointLightBlock));
-    memcpy(&activeLights.pointLights[1], &pointLight2, sizeof(uniform::PointLightBlock));
+    renderer::uniform::buffer::ActiveLights activeLights;
+    memcpy(&activeLights.pointLights[0], &pointLight, sizeof(renderer::uniform::block::PointLight));
+    memcpy(&activeLights.pointLights[1], &pointLight2, sizeof(renderer::uniform::block::PointLight));
     activeLights.pointLightCount = 2;
 
     GLfloat specularShininess = 32.f;
@@ -181,35 +182,35 @@ int main(int argc, char **args)
             }
             memcpy(&activeLights.pointLights[0], &pointLight, sizeof(gameobject::light::Point));
             glBindBuffer(GL_UNIFORM_BUFFER, u_lightData);
-            glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::buffer::ActiveLights), &activeLights, GL_DYNAMIC_DRAW);
+            glBufferData(GL_UNIFORM_BUFFER, sizeof(renderer::uniform::buffer::ActiveLights), &activeLights, GL_DYNAMIC_DRAW);
 
             mainCamera.framebufferWidth = app::window_vars.framebufferWidth;
             mainCamera.framebufferHeight = app::window_vars.framebufferHeight;
 
-            uniform::buffer::CameraData cameraMatrices(mainCamera);
+            renderer::uniform::buffer::CameraData cameraMatrices(mainCamera);
             glBindBuffer(GL_UNIFORM_BUFFER, u_cameraData);
-            glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::buffer::CameraData), &cameraMatrices, GL_DYNAMIC_DRAW);
+            glBufferData(GL_UNIFORM_BUFFER, sizeof(renderer::uniform::buffer::CameraData), &cameraMatrices, GL_DYNAMIC_DRAW);
 
             {
-                renderer::attachPart(cubePart);
+                renderer::usePart(cubePart);
 
-                uniform::buffer::ModelData modelData(mainCubeData.position, mainCubeData.rotation, mainCubeData.scale);
+                renderer::uniform::buffer::ModelData modelData(mainCubeData.position, mainCubeData.rotation, mainCubeData.scale);
                 glBindBuffer(GL_UNIFORM_BUFFER, u_modelData);
-                glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::buffer::ModelData), &modelData, GL_DYNAMIC_DRAW);
+                glBufferData(GL_UNIFORM_BUFFER, sizeof(renderer::uniform::buffer::ModelData), &modelData, GL_DYNAMIC_DRAW);
 
-                renderer::shader::setUniform(mainShader, glUniform1f, "specularShininess", specularShininess);
+                renderer::setUniform(*cubePart.shader, glUniform1f, "specularShininess", specularShininess);
 
                 renderer::drawPart(cubePart);
             }
 
             {
-                renderer::attachPart(cubePart);
+                renderer::usePart(cubePart);
 
                 for (size_t i = 0; i < batchCubes.size(); i++)
                 {
-                    uniform::buffer::ModelData modelData(batchCubes.at(i).position, batchCubes.at(i).rotation, batchCubes.at(i).scale);
+                    renderer::uniform::buffer::ModelData modelData(batchCubes.at(i).position, batchCubes.at(i).rotation, batchCubes.at(i).scale);
                     glBindBuffer(GL_UNIFORM_BUFFER, u_modelData);
-                    glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::buffer::ModelData), &modelData, GL_DYNAMIC_DRAW);
+                    glBufferData(GL_UNIFORM_BUFFER, sizeof(renderer::uniform::buffer::ModelData), &modelData, GL_DYNAMIC_DRAW);
 
                     renderer::drawPart(cubePart);
                 }

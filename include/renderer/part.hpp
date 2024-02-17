@@ -17,11 +17,12 @@ namespace renderer {
         renderer::Texture2D* diffuseMap;
         renderer::Texture2D* specularMap;
         renderer::Texture2D* normalMap;
-        renderer::shader::Program* shader;
+        renderer::Shader* shader;
 
-        Part(math::TransformMatrix* localTransformMatrix, renderer::Mesh* mesh, renderer::Texture2D* diffuseMap, renderer::Texture2D* specularMap, renderer::Texture2D* normalMap, renderer::shader::Program* shader);
+        Part(math::TransformMatrix* localTransformMatrix, renderer::Mesh* mesh, renderer::Texture2D* diffuseMap, renderer::Texture2D* specularMap, renderer::Texture2D* normalMap, renderer::Shader* shader);
     };
 
-    void attachPart(const renderer::Part& part);
+    void usePart(const renderer::Part& part);
+
     void drawPart(const renderer::Part& part);
 }

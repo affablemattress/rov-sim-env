@@ -12,26 +12,19 @@
 #define SHADER_ERROR_BUFFER_SIZE 512
 
 namespace renderer{
-    namespace shader {
-        struct Program {
-            GLuint id;
-            std::unordered_map<std::string, GLint> uniforms;
+    struct Shader {
+        GLuint id;
+        std::unordered_map<std::string, GLint> uniforms;
 
-            Program(std::string_view vertexShaderPath, std::string_view fragmentShaderPath);
-        };
+        Shader(std::string_view vertexShaderPath, std::string_view fragmentShaderPath, 
+                size_t sizeOfUniformNames, const GLchar** uniformNamesArray, 
+                size_t numOfUniformBlocks, const GLchar** uniformBlockNamesArray, const GLint* uniformBlockBindingPointsArray);
+    };
 
-        void compileProgram(shader::Program& program, const char* vertexShaderPath, const char* fragmentShaderPath);
+    void useShader(const Shader& shader);
 
-        void pushUniform(shader::Program& program, const GLchar* uniformName);
-        void pushUniforms(shader::Program& program, size_t sizeOfNames, const GLchar** uniformNamesArray);
-
-        template <typename F, typename... V>
-        void setUniform(shader::Program& program, F glUniformFunction, const GLchar* uniformName, V... args) {
-            glUniformFunction(program.uniforms[uniformName], args...);
-        }
-
-        void bindUniformBlock(shader::Program& program, const GLchar* blockName, GLint bindIndex);
+    template <typename F, typename... V>
+    void setUniform(Shader& shader, F glUniformFunction, const GLchar* uniformName, V... args) {
+        glUniformFunction(shader.uniforms[uniformName], args...);
     }
-
-    void useProgram(const shader::Program& program);
 }
