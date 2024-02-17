@@ -37,6 +37,8 @@ namespace renderer {
         renderer::EBO EBO;
         renderer::VAO VAO;
 
+        size_t numOfElements;
+
         Mesh(size_t sizeOfVertexBuffer, const GLfloat* vertexBuffer, 
              size_t sizeOfElementBuffer, const GLuint* elementBuffer,
              size_t numberOfVertexAttributes, const size_t vertexAttributeSizeList[]);

@@ -37,7 +37,9 @@ namespace renderer {
                size_t numberOfVertexAttributes, const size_t vertexAttributeSizeList[]) : 
                VBO(sizeOfVertexBuffer, vertexBuffer), 
                EBO(sizeOfElementBuffer, elementBuffer),
-               VAO(this->VBO, this->EBO, numberOfVertexAttributes, vertexAttributeSizeList) {}
+               VAO(this->VBO, this->EBO, numberOfVertexAttributes, vertexAttributeSizeList) {
+                   numOfElements = sizeOfElementBuffer;
+               }
 
     void useMesh(const Mesh& mesh) {
         glBindVertexArray(mesh.VAO.bufferID);

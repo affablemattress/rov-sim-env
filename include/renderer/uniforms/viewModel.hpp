@@ -37,7 +37,7 @@ namespace uniform {
             /// @param rotation float[3]
             /// @param scale float[3]
             ModelData(const float* position, const float* rotation, const float* scale) {
-                modelMatrix = math::buildModelMatrix(position, rotation, scale);
+                modelMatrix = math::buildTransformationMatrix(position, rotation, scale);
                 normalMatrix = math::buildNormalMatrixFromModelMatrix(modelMatrix);
             }
         };

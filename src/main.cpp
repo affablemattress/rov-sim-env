@@ -18,6 +18,7 @@
 #include "renderer/texture.hpp"
 #include "renderer/shader.hpp"
 #include "renderer/mesh.hpp"
+#include "renderer/part.hpp"
 #include "renderer/uniforms/viewModel.hpp"
 #include "renderer/uniforms/light.hpp"
 
@@ -51,14 +52,9 @@ int main(int argc, char **args)
 
     callbackGLFW::windowResize(window, 0, 0); // Call resize callback to set window vars
 
-    // ! ||--------------------------------------------------------------------------------||
-    // ! ||                              INITIALIZE RENDERERER                             ||
-    // ! ||--------------------------------------------------------------------------------||
-    size_t attributes[] = {3, 3, 2};
-    renderer::Mesh mainMesh(sizeof(cubeVertices), cubeVertices, sizeof(cubeIndices), cubeIndices, sizeof(attributes) / sizeof(size_t), attributes);
-
-    renderer::Texture2D mainDiffuseMap(PROJECT_PATH "res/texture/learnopengl/container/diffuse.png");
-    renderer::Texture2D mainSpecularMap(PROJECT_PATH "res/texture/learnopengl/container/specular.png");
+// ! ||--------------------------------------------------------------------------------||
+// ! ||                           INITIALIZE UNIFORM BUFFERS                           ||
+// ! ||--------------------------------------------------------------------------------||
 
     GLuint u_cameraData = 0, u_modelData = 0, u_lightData = 0;
     glGenBuffers(1, &u_cameraData);
@@ -68,35 +64,32 @@ int main(int argc, char **args)
     glBindBufferBase(GL_UNIFORM_BUFFER, 1, u_modelData);
     glBindBufferBase(GL_UNIFORM_BUFFER, 2, u_lightData);
 
-    renderer::shader::Program mainProgram(PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
+    // ! ||--------------------------------------------------------------------------------||
+    // ! ||                              --INITIALIZE PARTS---                             ||
+    // ! ||--------------------------------------------------------------------------------||
+    size_t attributes[] = {3, 3, 2};
+    renderer::Mesh mainMesh(sizeof(cubeVertices), cubeVertices, sizeof(cubeIndices), cubeIndices, sizeof(attributes) / sizeof(size_t), attributes);
+
+    renderer::Texture2D mainDiffuseMap(PROJECT_PATH "res/texture/learnopengl/container/diffuse.png");
+    renderer::Texture2D mainSpecularMap(PROJECT_PATH "res/texture/learnopengl/container/specular.png");
+
+    renderer::shader::Program mainShader(PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
     {
         const GLchar *programUniforms[] = {"diffuseMap", "specularMap", "specularShininess"};
-        renderer::shader::pushUniforms(mainProgram, sizeof(programUniforms) / sizeof(GLchar *), programUniforms);
+        renderer::shader::pushUniforms(mainShader, sizeof(programUniforms) / sizeof(GLchar *), programUniforms);
 
-        renderer::useProgram(mainProgram);
-        renderer::shader::setUniform(mainProgram, glUniform1i, "diffuseMap", 0);
-        renderer::shader::setUniform(mainProgram, glUniform1i, "specularMap", 1);
+        renderer::useProgram(mainShader);
+        renderer::shader::setUniform(mainShader, glUniform1i, "diffuseMap", 0);
+        renderer::shader::setUniform(mainShader, glUniform1i, "specularMap", 1);
 
-        renderer::shader::bindUniformBlock(mainProgram, "CameraData", 0);
-        renderer::shader::bindUniformBlock(mainProgram, "ModelData", 1);
-        renderer::shader::bindUniformBlock(mainProgram, "ActiveLights", 2);
+        renderer::shader::bindUniformBlock(mainShader, "CameraData", 0);
+        renderer::shader::bindUniformBlock(mainShader, "ModelData", 1);
+        renderer::shader::bindUniformBlock(mainShader, "ActiveLights", 2);
     }
 
-    renderer::Texture2D batchDiffuseMap(PROJECT_PATH "res/texture/kenney/png/Dark/texture_13.png");
-
-    renderer::shader::Program batchProgram(PROJECT_PATH "res/shader/vertexBatch.glsl", PROJECT_PATH "res/shader/fragmentBatch.glsl");
-    {
-        const GLchar *programUniforms[] = {"mixColor", "mixWeight", "diffuseMap"};
-        renderer::shader::pushUniforms(batchProgram, sizeof(programUniforms) / sizeof(GLchar *), programUniforms);
-
-        renderer::useProgram(batchProgram);
-
-        renderer::shader::setUniform(batchProgram, glUniform1i, "diffuseMap", 0);
-
-        renderer::shader::bindUniformBlock(batchProgram, "CameraData", 0);
-        renderer::shader::bindUniformBlock(batchProgram, "ModelData", 1);
-        renderer::shader::bindUniformBlock(batchProgram, "ActiveLights", 2);
-    }
+    renderer::Part cubePart(&math::identityTransformMatrix, &mainMesh,
+                            &mainDiffuseMap, &mainSpecularMap, &mainSpecularMap,
+                            &mainShader);
 
     // ! ||--------------------------------------------------------------------------------||
     // ! ||                                INITIALIZE SCENE                                ||
@@ -198,24 +191,19 @@ int main(int argc, char **args)
             glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::buffer::CameraData), &cameraMatrices, GL_DYNAMIC_DRAW);
 
             {
-                renderer::useProgram(mainProgram);
-
-                renderer::useMesh(mainMesh);
-
-                renderer::useTexture2D(mainDiffuseMap, GL_TEXTURE0);
-                renderer::useTexture2D(mainSpecularMap, GL_TEXTURE0 + 1);
+                renderer::attachPart(cubePart);
 
                 uniform::buffer::ModelData modelData(mainCubeData.position, mainCubeData.rotation, mainCubeData.scale);
                 glBindBuffer(GL_UNIFORM_BUFFER, u_modelData);
                 glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::buffer::ModelData), &modelData, GL_DYNAMIC_DRAW);
 
-                renderer::shader::setUniform(mainProgram, glUniform1f, "specularShininess", specularShininess);
+                renderer::shader::setUniform(mainShader, glUniform1f, "specularShininess", specularShininess);
 
-                glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (void *)0);
+                renderer::drawPart(cubePart);
             }
 
             {
-                renderer::useProgram(mainProgram);
+                renderer::attachPart(cubePart);
 
                 for (size_t i = 0; i < batchCubes.size(); i++)
                 {
@@ -223,7 +211,7 @@ int main(int argc, char **args)
                     glBindBuffer(GL_UNIFORM_BUFFER, u_modelData);
                     glBufferData(GL_UNIFORM_BUFFER, sizeof(uniform::buffer::ModelData), &modelData, GL_DYNAMIC_DRAW);
 
-                    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (void *)0);
+                    renderer::drawPart(cubePart);
                 }
             }
         }

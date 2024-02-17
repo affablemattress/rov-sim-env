@@ -80,6 +80,7 @@ project(cmake-boilerplate)
     src/renderer/texture.cpp 
     src/renderer/mesh.cpp 
     src/renderer/shader.cpp 
+    src/renderer/part.cpp 
     src/window/callbackGLFW.cpp 
     src/window/window.cpp
     src/systems/gui.cpp
