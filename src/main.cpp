@@ -23,15 +23,24 @@
 #include "renderer/uniforms/viewModel.hpp"
 #include "renderer/uniforms/light.hpp"
 
+#include "util/containers/tree.hpp"
+
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 #include "spdlog/spdlog.h"
 #include "stb_image.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include "assimp/Importer.hpp"
+#include "assimp/postprocess.h"
+#include "assimp/scene.h"
+#include "assimp/DefaultLogger.hpp"
 
 #include <stdlib.h>
 #include <time.h>
+#include <vector>
+#include <list>
+
 
 int main(int argc, char **args)
 {
@@ -51,6 +60,9 @@ int main(int argc, char **args)
     app::lifetime::initGLAD();
     app::lifetime::initIMGUI(window);
 
+    Assimp::Importer aiImporter;
+    Assimp::DefaultLogger::create("assimp-log.txt", Assimp::Logger::VERBOSE);
+
     callbackGLFW::windowResize(window, 0, 0); // Call resize callback to set window vars
 
 // ! ||--------------------------------------------------------------------------------||
@@ -67,30 +79,105 @@ int main(int argc, char **args)
 // ! ||--------------------------------------------------------------------------------||
 // ! ||                               INITIALIZE SHADERS                               ||
 // ! ||--------------------------------------------------------------------------------||
-    const GLchar *mainShaderUniformNames[] = { "diffuseMap", "specularMap", "specularShininess" };
+    renderer::Shader mainShader;
+
+    const GLchar *mainShaderUniformNames[] = { "map_diffuse", "map_specular", "map_normal", "map_emissive", "map_occlusion", "specularShininess" };
     const GLchar *mainShaderUniformBlockNames[] = { "CameraData", "ModelData", "ActiveLights" };
     const GLint mainShaderUniformBlockBindingPoints[] = { 0, 1, 2 };
-
-    renderer::Shader mainShader(PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl", 
-                                sizeof(mainShaderUniformNames) / sizeof(GLchar*), mainShaderUniformNames,
-                                sizeof(mainShaderUniformBlockNames) / sizeof(GLchar*), mainShaderUniformBlockNames, mainShaderUniformBlockBindingPoints);
-
-    // ! ||--------------------------------------------------------------------------------||
-    // ! ||                              --INITIALIZE PARTS---                             ||
-    // ! ||--------------------------------------------------------------------------------||
-    size_t attributes[] = {3, 3, 2};
-    renderer::Mesh mainMesh(sizeof(cubeVertices), cubeVertices, sizeof(cubeIndices), cubeIndices, sizeof(attributes) / sizeof(size_t), attributes);
-
-    renderer::Texture2D mainDiffuseMap(PROJECT_PATH "res/texture/learnopengl/container/diffuse.png");
-    renderer::Texture2D mainSpecularMap(PROJECT_PATH "res/texture/learnopengl/container/specular.png");
-
+    renderer::initShader(mainShader, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl", 
+                         sizeof(mainShaderUniformNames) / sizeof(GLchar*), mainShaderUniformNames,
+                         sizeof(mainShaderUniformBlockNames) / sizeof(GLchar*), mainShaderUniformBlockNames, mainShaderUniformBlockBindingPoints);
+    
     renderer::useShader(mainShader);
-    renderer::setUniform(mainShader, glUniform1i, "diffuseMap", 0);
-    renderer::setUniform(mainShader, glUniform1i, "specularMap", 1);
+    renderer::setUniform(mainShader, glUniform1i, "map_diffuse", 0);
+    renderer::setUniform(mainShader, glUniform1i, "map_specular", 1);
+    renderer::setUniform(mainShader, glUniform1i, "map_normal", 2);
+    renderer::setUniform(mainShader, glUniform1i, "map_emissive", 3);
+    renderer::setUniform(mainShader, glUniform1i, "map_occlusion", 4);
 
-    renderer::Part cubePart(&math::identityTransformMatrix, &mainMesh,
-                            &mainDiffuseMap, &mainSpecularMap, &mainSpecularMap,
-                            &mainShader);
+    // ! ||--------------------------------------------------------------------------------||
+    // ! ||                          --INITIALIZE MATERIALS---                             ||
+    // ! ||--------------------------------------------------------------------------------||
+    renderer::Mesh cubeMesh;
+
+    renderer::d_Mesh* cubeMeshData = renderer::loadMeshFromStaticBuffer("Cube", sizeof(cubeVertices), cubeVertices, sizeof(cubeIndices), cubeIndices);
+    renderer::pushMesh(cubeMesh, cubeMeshData);
+    renderer::freeMesh(cubeMeshData);
+
+    renderer::Texture2D cubeDiffuseMap;
+    renderer::Texture2D cubeSpecularMap;
+
+    renderer::d_Texture2D* diffuseMapData = renderer::loadTexture2DFromFile(PROJECT_PATH "res/texture/learnopengl/container/diffuse.png", renderer::TextureType::k_diffuse);
+    renderer::pushTexture2D(cubeDiffuseMap, diffuseMapData);
+    renderer::freeTexture2D(diffuseMapData);
+
+    renderer::d_Texture2D* specularMapData = renderer::loadTexture2DFromFile(PROJECT_PATH "res/texture/learnopengl/container/specular.png", renderer::TextureType::k_specular);
+    renderer::pushTexture2D(cubeSpecularMap, specularMapData);
+    renderer::freeTexture2D(specularMapData);
+
+    renderer::Material cubeMaterial(&cubeDiffuseMap, &cubeSpecularMap, nullptr, nullptr, nullptr, &mainShader);
+
+// ! ||--------------------------------------------------------------------------------||
+// ! ||                                 LOAD MODEL TRY                                 ||
+// ! ||--------------------------------------------------------------------------------||
+    util::container::Tree<renderer::Part*> partTree;
+    std::vector<renderer::Texture2D> textures;
+
+    std::vector<renderer::Part> parts;
+    std::vector<math::TransformMatrix> localTransforms;
+    std::vector<renderer::Material> materials;
+    std::vector<renderer::Mesh> meshes;
+
+    std::string modelPath = PROJECT_PATH "res/model/survival-backpack/scene.gltf";
+    std::string modelDirectory = modelPath.substr(0, modelPath.find_last_of('/') + 1);
+    renderer::Shader* modelShader = &mainShader;
+
+    spdlog::info("Loading model at path: {0}", modelPath.c_str());
+
+    const aiScene* scene = aiImporter.ReadFile(modelPath.c_str(), 
+                                                 aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices | aiProcess_CalcTangentSpace |aiProcess_RemoveRedundantMaterials | aiProcess_FixInfacingNormals | aiProcess_ImproveCacheLocality | aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph);
+    if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+        spdlog::error("Couldn't load model: {0}", modelPath.c_str());
+        spdlog::error(aiImporter.GetErrorString());
+        app::lifetime::killAll(1);
+    }
+
+    aiNode* currentNode = scene->mRootNode;
+    
+    math::TransformMatrix& nodeLocalTransform = localTransforms.emplace_back(glm::mat4());
+    memcpy(&nodeLocalTransform, &currentNode->mTransformation, sizeof(glm::mat4));
+    nodeLocalTransform = glm::transpose(nodeLocalTransform);
+    
+    /*for(size_t i = 0; i < currentNode->mNumMeshes; i++) {
+        aiMesh* currentAssimpMesh = scene->mMeshes[currentNode->mMeshes[i]];
+
+        renderer::Mesh newMesh;
+        renderer::d_Mesh* newMeshData renderer::loadMeshFromAssimpMesh(currentAssimpMesh); 
+        renderer::pushMesh(newMesh, newMeshData);
+
+        // ! ||--------------------------------------------------------------------------------||
+        // ! ||                                 LOAD MATERIALS                                 ||
+        // ! ||--------------------------------------------------------------------------------||
+        aiMaterial* currentMaterial = scene->mMaterials[newMesh.mMaterialIndex];
+
+        spdlog::info(currentMaterial->GetName().C_Str());
+        spdlog::info(currentMaterial->mProperties[0]->);
+        for(size_t j = 0; j < currentMaterial->GetTextureCount(aiTextureType_DIFFUSE); j++) {
+
+        }
+
+        for(size_t j = 0; j < currentMaterial->GetTextureCount(aiTextureType_SPECULAR) && j < 2; j++) {
+
+        }
+
+        for(size_t j = 0; j < currentMaterial->GetTextureCount(aiTextureType_NORMALS) && j < 2; j++) {
+        }
+
+        newPart.shader = modelShader;
+
+        renderer::freeMesh(newMeshData);
+
+    }*/
 
     // ! ||--------------------------------------------------------------------------------||
     // ! ||                                INITIALIZE SCENE                                ||
@@ -192,19 +279,20 @@ int main(int argc, char **args)
             glBufferData(GL_UNIFORM_BUFFER, sizeof(renderer::uniform::buffer::CameraData), &cameraMatrices, GL_DYNAMIC_DRAW);
 
             {
-                renderer::usePart(cubePart);
+                renderer::useMaterial(cubeMaterial);
 
                 renderer::uniform::buffer::ModelData modelData(mainCubeData.position, mainCubeData.rotation, mainCubeData.scale);
                 glBindBuffer(GL_UNIFORM_BUFFER, u_modelData);
                 glBufferData(GL_UNIFORM_BUFFER, sizeof(renderer::uniform::buffer::ModelData), &modelData, GL_DYNAMIC_DRAW);
 
-                renderer::setUniform(*cubePart.shader, glUniform1f, "specularShininess", specularShininess);
+                renderer::setUniform(*cubeMaterial.shader, glUniform1f, "specularShininess", specularShininess);
 
-                renderer::drawPart(cubePart);
+                renderer::useMesh(cubeMesh);
+                renderer::drawMesh(cubeMesh);
             }
 
             {
-                renderer::usePart(cubePart);
+                renderer::useMaterial(cubeMaterial);
 
                 for (size_t i = 0; i < batchCubes.size(); i++)
                 {
@@ -212,9 +300,22 @@ int main(int argc, char **args)
                     glBindBuffer(GL_UNIFORM_BUFFER, u_modelData);
                     glBufferData(GL_UNIFORM_BUFFER, sizeof(renderer::uniform::buffer::ModelData), &modelData, GL_DYNAMIC_DRAW);
 
-                    renderer::drawPart(cubePart);
+                    renderer::useMesh(cubeMesh);
+                    renderer::drawMesh(cubeMesh);
                 }
             }
+
+            /*{
+                for(const renderer::Part& part: parts) {
+                    renderer::usePart(part);
+
+                    renderer::uniform::buffer::ModelData modelData(math::zeroes3, math::zeroes3, math::ones3);
+                    glBindBuffer(GL_UNIFORM_BUFFER, u_modelData);
+                    glBufferData(GL_UNIFORM_BUFFER, sizeof(renderer::uniform::buffer::ModelData), &modelData, GL_DYNAMIC_DRAW);
+
+                    renderer::drawPart(part); 
+                }
+            }*/
         }
 
         gui::render();

@@ -61,10 +61,7 @@ namespace gameobject {
             /// @param specularIntensity intensity for specular component
             /// @param falloff C, P, Q parameters for attenuation
             Point(const glm::vec4& ambientColor, const glm::vec4& color, const glm::vec3& pos, 
-                GLfloat ambientIntensity, GLfloat specularIntensity,GLfloat falloffC, GLfloat falloffP, GLfloat falloffQ) 
-                    : ambientColor(ambientColor), color(color), pos(pos),
-                    ambientIntensity(ambientIntensity), specularIntensity(specularIntensity), 
-                    falloffC(falloffC), falloffP(falloffP), falloffQ(falloffQ) { };
+                GLfloat ambientIntensity, GLfloat specularIntensity,GLfloat falloffC, GLfloat falloffP, GLfloat falloffQ);
         };
     }
 }

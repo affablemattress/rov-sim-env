@@ -16,7 +16,7 @@ static GLuint compileShaderFromPath(const char* filepath, GLint shaderType) {
     spdlog::info("Compiling shader (type: {0}) at path: {1}", shaderType, filepath);
     FILE* shaderFile = fopen(filepath, "r");
     if(!shaderFile) {
-        spdlog::error("Couldn't open file: {0}", filepath);
+        spdlog::error("Couldn't open shader: {0}", filepath);
         app::lifetime::killAll(1);
     }
     GLchar* shaderSource = new GLchar[SHADER_SOURCE_BUFFER_SIZE];
@@ -82,13 +82,13 @@ static void bindUniformBlocks(renderer::Shader& program, size_t numOfUniformBloc
 }
 
 namespace renderer{
-    Shader::Shader(std::string_view vertexShaderPath, std::string_view fragmentShaderPath,
-                   size_t sizeOfUniformNames, const GLchar** uniformNamesArray, 
-                   size_t numOfUniformBlocks, const GLchar** uniformBlockNamesArray, const GLint* uniformBlockBindingPointsArray) {
-        id = glCreateProgram();
-        compileProgram(*this, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
-        pushUniforms(*this, sizeOfUniformNames, uniformNamesArray);
-        bindUniformBlocks(*this, numOfUniformBlocks, uniformBlockNamesArray, uniformBlockBindingPointsArray);
+    void initShader(Shader& shader, std::string_view vertexShaderPath, std::string_view fragmentShaderPath,
+                              size_t sizeOfUniformNames, const GLchar** uniformNamesArray, 
+                              size_t numOfUniformBlocks, const GLchar** uniformBlockNamesArray, const GLint* uniformBlockBindingPointsArray) {
+        shader.id = glCreateProgram();
+        compileProgram(shader, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl");
+        pushUniforms(shader, sizeOfUniformNames, uniformNamesArray);
+        bindUniformBlocks(shader, numOfUniformBlocks, uniformBlockNamesArray, uniformBlockBindingPointsArray);
     }
 
     void useShader(const Shader& shader) {

@@ -5,6 +5,7 @@
 #include "renderer/shader.hpp"
 #include "renderer/mesh.hpp"
 #include "renderer/texture.hpp"
+#include "renderer/material.hpp"
 #include "math.hpp"
 
 #include "glm/glm.hpp"
@@ -13,13 +14,13 @@
 namespace renderer {
     struct Part {
         math::TransformMatrix* localTransformMatrix;
-        renderer::Mesh* mesh;
-        renderer::Texture2D* diffuseMap;
-        renderer::Texture2D* specularMap;
-        renderer::Texture2D* normalMap;
-        renderer::Shader* shader;
 
-        Part(math::TransformMatrix* localTransformMatrix, renderer::Mesh* mesh, renderer::Texture2D* diffuseMap, renderer::Texture2D* specularMap, renderer::Texture2D* normalMap, renderer::Shader* shader);
+        renderer::Mesh* mesh;
+
+        renderer::Material* material;
+
+        Part() = delete;
+        Part(math::TransformMatrix* localTransformMatrix, renderer::Mesh* mesh, renderer::Material* material);
     };
 
     void usePart(const renderer::Part& part);

@@ -1,0 +1,42 @@
+Info,  T0: Load /home/kayra/dev/cpp/rov-sim-env/res/model/survival-backpack/scene.gltf
+Debug, T0: Assimp 5.3.764999336 amd64 gcc singlethreadedsingle : 
+Info,  T0: Found a possible importer: glTF Importer; trying signature-based detection
+Info,  T0: Found a possible importer: glTF2 Importer; trying signature-based detection
+Debug, T0: Loading GLTF2 asset
+Debug, T0: Parsing GLTF2 JSON
+Info,  T0: Found a matching importer for this file format: glTF2 Importer.
+Info,  T0: Import root directory is '/home/kayra/dev/cpp/rov-sim-env/res/model/survival-backpack/'
+Debug, T0: Reading GLTF2 file
+Debug, T0: Loading GLTF2 asset
+Debug, T0: Parsing GLTF2 JSON
+Debug, T0: Importing 1 materials
+Debug, T0: Importing 79 meshes
+Debug, T0: Importing nodes
+Debug, T0: Importing 0 animations
+Debug, T0: Importing metadata
+Debug, T0: UpdateImporterScale scale set: 1
+Info,  T0: Entering post processing pipeline
+Debug, T0: FlipUVsProcess begin
+Debug, T0: FlipUVsProcess finished
+Debug, T0: RemoveRedundantMatsProcess begin
+Info,  T0: RemoveRedundantMatsProcess finished. Removed 0 redundant and 1 unused materials.
+Debug, T0: OptimizeGraphProcess begin
+Info,  T0: OptimizeGraphProcess finished; Input nodes: 161, Output nodes: 1
+Debug, T0: TriangulateProcess begin
+Debug, T0: TriangulateProcess finished. There was nothing to be done.
+Debug, T0: OptimizeMeshesProcess begin
+Debug, T0: OptimizeMeshesProcess finished. Input meshes: 79, Output meshes: 1
+Debug, T0: FixInfacingNormalsProcess begin
+Debug, T0: FixInfacingNormalsProcess finished. No changes to the scene.
+Debug, T0: GenFaceNormalsProcess begin
+Debug, T0: GenFaceNormalsProcess finished. Normals are already there
+Debug, T0: Generate spatially-sorted vertex cache
+Debug, T0: CalcTangentsProcess begin
+Debug, T0: CalcTangentsProcess finished
+Debug, T0: JoinVerticesProcess begin
+Debug, T0: <fixme: long message discarded>
+Info,  T0: JoinVerticesProcess finished | Verts in: 47528 out: 47497 | ~0.0652247
+Debug, T0: ImproveCacheLocalityProcess begin
+Debug, T0: Mesh 0| ACMR in: 1.22676 out: 0 | average ACMR 100
+Debug, T0: ImproveCacheLocalityProcess finished. 
+Info,  T0: Leaving post processing pipeline
