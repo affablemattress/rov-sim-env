@@ -19,6 +19,7 @@
 #include "renderer/shader.hpp"
 #include "renderer/mesh.hpp"
 #include "renderer/part.hpp"
+#include "renderer/model.hpp"
 
 #include "renderer/uniforms/viewModel.hpp"
 #include "renderer/uniforms/light.hpp"
@@ -42,14 +43,13 @@
 #include <list>
 
 
-int main(int argc, char **args)
-{
+int main(int argc, char **args) {
     // ! ||--------------------------------------------------------------------------------||
     // ! ||                                 INITIALIZE APP                                 ||
     // ! ||--------------------------------------------------------------------------------||
     app::lifetime::startApp();
 
-    app::lifetime::initSPDLOG(spdlog::level::level_enum::info, "Started rov-sim-env...");
+    app::lifetime::initSPDLOG(spdlog::level::level_enum::debug, "Started rov-sim-env...");
     app::lifetime::initSTBI();
     app::lifetime::initGLFW(callbackGLFW::error, "GLFW init.");
 
@@ -77,60 +77,81 @@ int main(int argc, char **args)
     glBindBufferBase(GL_UNIFORM_BUFFER, 2, u_lightData);
 
 // ! ||--------------------------------------------------------------------------------||
-// ! ||                               INITIALIZE SHADERS                               ||
+// ! ||                        INITIALIZE SCENE DATA STRUCTURES                        ||
 // ! ||--------------------------------------------------------------------------------||
-    renderer::Shader mainShader;
+    std::vector<renderer::Shader> shaders;
+    shaders.reserve(100);
+    std::vector<renderer::Texture2D> textures;
+    textures.reserve(100);
+    std::vector<renderer::Material> materials;
+    materials.reserve(100);
+    std::vector<renderer::Mesh> meshes;
+    meshes.reserve(100);
+    std::vector<math::TransformMatrix> localTransforms;
+    localTransforms.reserve(100);
+    std::vector<renderer::Part> parts;
+    parts.reserve(100);
+    std::vector<renderer::Model> models;
+    models.reserve(100);
+
+// ! ||--------------------------------------------------------------------------------||
+// ! ||                                INITIALIZE SHADER                               ||
+// ! ||--------------------------------------------------------------------------------||
+    renderer::Shader* mainShader = &shaders.emplace_back();
 
     const GLchar *mainShaderUniformNames[] = { "map_diffuse", "map_specular", "map_normal", "map_emissive", "map_occlusion", "specularShininess" };
     const GLchar *mainShaderUniformBlockNames[] = { "CameraData", "ModelData", "ActiveLights" };
     const GLint mainShaderUniformBlockBindingPoints[] = { 0, 1, 2 };
-    renderer::initShader(mainShader, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl", 
+    renderer::initShader(*mainShader, PROJECT_PATH "res/shader/vertexMain.glsl", PROJECT_PATH "res/shader/fragmentMain.glsl", 
                          sizeof(mainShaderUniformNames) / sizeof(GLchar*), mainShaderUniformNames,
                          sizeof(mainShaderUniformBlockNames) / sizeof(GLchar*), mainShaderUniformBlockNames, mainShaderUniformBlockBindingPoints);
     
-    renderer::useShader(mainShader);
-    renderer::setUniform(mainShader, glUniform1i, "map_diffuse", 0);
-    renderer::setUniform(mainShader, glUniform1i, "map_specular", 1);
-    renderer::setUniform(mainShader, glUniform1i, "map_normal", 2);
-    renderer::setUniform(mainShader, glUniform1i, "map_emissive", 3);
-    renderer::setUniform(mainShader, glUniform1i, "map_occlusion", 4);
+    renderer::useShader(*mainShader);
+    renderer::setUniform(*mainShader, glUniform1i, "map_diffuse", 0);
+    renderer::setUniform(*mainShader, glUniform1i, "map_specular", 1);
+    renderer::setUniform(*mainShader, glUniform1i, "map_normal", 2);
+    renderer::setUniform(*mainShader, glUniform1i, "map_emissive", 3);
+    renderer::setUniform(*mainShader, glUniform1i, "map_occlusion", 4);
 
-    // ! ||--------------------------------------------------------------------------------||
-    // ! ||                          --INITIALIZE MATERIALS---                             ||
-    // ! ||--------------------------------------------------------------------------------||
-    renderer::Mesh cubeMesh;
-
-    renderer::d_Mesh* cubeMeshData = renderer::loadMeshFromStaticBuffer("Cube", sizeof(cubeVertices), cubeVertices, sizeof(cubeIndices), cubeIndices);
-    renderer::pushMesh(cubeMesh, cubeMeshData);
-    renderer::freeMesh(cubeMeshData);
-
-    renderer::Texture2D cubeDiffuseMap;
-    renderer::Texture2D cubeSpecularMap;
+// ! ||--------------------------------------------------------------------------------||
+// ! ||                               INITIALIZE MATERIAL                              ||
+// ! ||--------------------------------------------------------------------------------||
+    renderer::Texture2D* cubeDiffuseMap = &textures.emplace_back();
+    renderer::Texture2D* cubeSpecularMap = &textures.emplace_back();
 
     renderer::d_Texture2D* diffuseMapData = renderer::loadTexture2DFromFile(PROJECT_PATH "res/texture/learnopengl/container/diffuse.png", renderer::TextureType::k_diffuse);
-    renderer::pushTexture2D(cubeDiffuseMap, diffuseMapData);
+    renderer::pushTexture2D(*cubeDiffuseMap, diffuseMapData);
     renderer::freeTexture2D(diffuseMapData);
 
     renderer::d_Texture2D* specularMapData = renderer::loadTexture2DFromFile(PROJECT_PATH "res/texture/learnopengl/container/specular.png", renderer::TextureType::k_specular);
-    renderer::pushTexture2D(cubeSpecularMap, specularMapData);
+    renderer::pushTexture2D(*cubeSpecularMap, specularMapData);
     renderer::freeTexture2D(specularMapData);
 
-    renderer::Material cubeMaterial(&cubeDiffuseMap, &cubeSpecularMap, nullptr, nullptr, nullptr, &mainShader);
+    renderer::Material* cubeMaterial = &materials.emplace_back();
+    renderer::initMaterial(*cubeMaterial, cubeDiffuseMap, cubeSpecularMap, nullptr, nullptr, nullptr, mainShader);
+
+// ! ||--------------------------------------------------------------------------------||
+// ! ||                                INITIALIZE MODEL                                ||
+// ! ||--------------------------------------------------------------------------------||
+    renderer::Mesh* cubeMesh = &meshes.emplace_back();
+
+    renderer::d_Mesh* cubeMeshData = renderer::loadMeshFromStaticBuffer("Cube", sizeof(cubeVertices), cubeVertices, sizeof(cubeIndices), cubeIndices);
+    renderer::pushMesh(*cubeMesh, cubeMeshData);
+    renderer::freeMesh(cubeMeshData);
+
+    math::TransformMatrix* cubeTransform = &localTransforms.emplace_back();
+    *cubeTransform = math::identityTransformMatrix;
+
+    renderer::Part* cubePart = &parts.emplace_back();
+    renderer::initPart(*cubePart, cubeTransform, cubeMesh, cubeMaterial);
+
+    renderer::Model* cubeModel = &models.emplace_back(cubePart);
 
 // ! ||--------------------------------------------------------------------------------||
 // ! ||                                 LOAD MODEL TRY                                 ||
 // ! ||--------------------------------------------------------------------------------||
-    util::container::Tree<renderer::Part*> partTree;
-    std::vector<renderer::Texture2D> textures;
-
-    std::vector<renderer::Part> parts;
-    std::vector<math::TransformMatrix> localTransforms;
-    std::vector<renderer::Material> materials;
-    std::vector<renderer::Mesh> meshes;
-
     std::string modelPath = PROJECT_PATH "res/model/survival-backpack/scene.gltf";
     std::string modelDirectory = modelPath.substr(0, modelPath.find_last_of('/') + 1);
-    renderer::Shader* modelShader = &mainShader;
 
     spdlog::info("Loading model at path: {0}", modelPath.c_str());
 
@@ -142,6 +163,13 @@ int main(int argc, char **args)
         app::lifetime::killAll(1);
     }
 
+    aiString texturePath;
+    spdlog::debug("diffuse {0}", (int)scene->mMaterials[0]->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath));
+    spdlog::debug("path {0}", texturePath.C_Str());
+    spdlog::debug("specular {0}", (int)scene->mMaterials[0]->GetTexture(aiTextureType_METALNESS, 0, &texturePath));
+    spdlog::debug("path {0}", texturePath.C_Str());
+    spdlog::debug("normal {0}", (int)scene->mMaterials[0]->GetTexture(aiTextureType_NORMALS, 0, &texturePath));
+    spdlog::debug("path {0}", texturePath.C_Str());
     aiNode* currentNode = scene->mRootNode;
     
     math::TransformMatrix& nodeLocalTransform = localTransforms.emplace_back(glm::mat4());
@@ -187,7 +215,7 @@ int main(int argc, char **args)
     gameobject::light::Point pointLight2({0.8f, 0.2f, 0.f, 1.f}, {1.f, 0.0f, 0.f, 1.f}, {-3.f, 4.f, -4.f},
                                          0.2f, 0.5f, 1.f, 1.f, 1.f);
 
-    renderer::uniform::buffer::ActiveLights activeLights;
+    renderer::uniformBuffer::ActiveLights activeLights;
     memcpy(&activeLights.pointLights[0], &pointLight, sizeof(renderer::uniform::block::PointLight));
     memcpy(&activeLights.pointLights[1], &pointLight2, sizeof(renderer::uniform::block::PointLight));
     activeLights.pointLightCount = 2;
@@ -269,39 +297,31 @@ int main(int argc, char **args)
             }
             memcpy(&activeLights.pointLights[0], &pointLight, sizeof(gameobject::light::Point));
             glBindBuffer(GL_UNIFORM_BUFFER, u_lightData);
-            glBufferData(GL_UNIFORM_BUFFER, sizeof(renderer::uniform::buffer::ActiveLights), &activeLights, GL_DYNAMIC_DRAW);
+            glBufferData(GL_UNIFORM_BUFFER, sizeof(renderer::uniformBuffer::ActiveLights), &activeLights, GL_DYNAMIC_DRAW);
 
             mainCamera.framebufferWidth = app::window_vars.framebufferWidth;
             mainCamera.framebufferHeight = app::window_vars.framebufferHeight;
 
-            renderer::uniform::buffer::CameraData cameraMatrices(mainCamera);
+            renderer::uniformBuffer::CameraData cameraMatrices(mainCamera);
             glBindBuffer(GL_UNIFORM_BUFFER, u_cameraData);
-            glBufferData(GL_UNIFORM_BUFFER, sizeof(renderer::uniform::buffer::CameraData), &cameraMatrices, GL_DYNAMIC_DRAW);
+            glBufferData(GL_UNIFORM_BUFFER, sizeof(renderer::uniformBuffer::CameraData), &cameraMatrices, GL_DYNAMIC_DRAW);
 
             {
-                renderer::useMaterial(cubeMaterial);
+                renderer::usePart(*cubePart);
 
-                renderer::uniform::buffer::ModelData modelData(mainCubeData.position, mainCubeData.rotation, mainCubeData.scale);
-                glBindBuffer(GL_UNIFORM_BUFFER, u_modelData);
-                glBufferData(GL_UNIFORM_BUFFER, sizeof(renderer::uniform::buffer::ModelData), &modelData, GL_DYNAMIC_DRAW);
+                renderer::setUniform(*cubeMaterial->shader, glUniform1f, "specularShininess", specularShininess);
 
-                renderer::setUniform(*cubeMaterial.shader, glUniform1f, "specularShininess", specularShininess);
-
-                renderer::useMesh(cubeMesh);
-                renderer::drawMesh(cubeMesh);
+                *cubeTransform = math::buildTransformMatrix(mainCubeData.position, mainCubeData.rotation, mainCubeData.scale);
+                renderer::drawPart(*cubePart, cubeTransform, u_modelData);
             }
 
             {
-                renderer::useMaterial(cubeMaterial);
+                renderer::usePart(*cubePart);
 
                 for (size_t i = 0; i < batchCubes.size(); i++)
                 {
-                    renderer::uniform::buffer::ModelData modelData(batchCubes.at(i).position, batchCubes.at(i).rotation, batchCubes.at(i).scale);
-                    glBindBuffer(GL_UNIFORM_BUFFER, u_modelData);
-                    glBufferData(GL_UNIFORM_BUFFER, sizeof(renderer::uniform::buffer::ModelData), &modelData, GL_DYNAMIC_DRAW);
-
-                    renderer::useMesh(cubeMesh);
-                    renderer::drawMesh(cubeMesh);
+                    math::TransformMatrix cubeTransformMatrix = math::buildTransformMatrix(batchCubes.at(i).position, batchCubes.at(i).rotation, batchCubes.at(i).scale);
+                    renderer::drawPart(*cubePart, cubeTransform, u_modelData);
                 }
             }
 

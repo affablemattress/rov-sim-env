@@ -10,7 +10,9 @@ namespace util {
             DataType data;
             std::vector<TreeNode<DataType>*> children;
         
-            TreeNode() = delete;
+            TreeNode() {
+                parent = nullptr;
+            };
 
             TreeNode(DataType data) {
                 parent = nullptr;
@@ -41,6 +43,6 @@ namespace util {
         };
 
         template <typename DataType>
-        using Tree = TreeNode<DataType>*;
+        using Tree = TreeNode<DataType>;
     }
 }

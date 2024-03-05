@@ -3,3 +3,4 @@ build/
 .vscode/
 imgui.ini
 TODO.txt
+assimp-log.txt

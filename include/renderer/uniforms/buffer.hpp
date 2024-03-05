@@ -10,15 +10,13 @@
 
 #pragma pack(1)
 namespace renderer {
-    namespace uniform {
-        namespace buffer {
-            struct ActiveLights {
-                renderer::uniform::block::PointLight pointLights[16];
-                GLint pointLightCount;
+    namespace uniformBuffer {
+        struct ActiveLights {
+            renderer::uniform::block::PointLight pointLights[16];
+            GLint pointLightCount;
 
-                ActiveLights(): pointLightCount(0) {};
-            };
-        }
+            ActiveLights(): pointLightCount(0) {};
+        };
     }
 }
 #pragma pack() 

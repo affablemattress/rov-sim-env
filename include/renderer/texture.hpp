@@ -10,8 +10,6 @@ namespace component {
 }
 
 namespace renderer {
-    using TextureBuffer = GLuint;
-
     enum TextureType {
         k_diffuse,
         k_specular,
@@ -32,12 +30,11 @@ namespace renderer {
     };
 
     struct Texture2D {
-        TextureBuffer bufferID;
+        GLuint bufferID;
 
         TextureType type;
         std::string filepath;
     };
-
 
 
     d_Texture2D* loadTexture2DFromFile(std::string_view filepath, TextureType type);

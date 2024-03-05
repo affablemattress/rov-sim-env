@@ -1,13 +1,14 @@
 #include "renderer/material.hpp"
 
 namespace renderer {
-    Material::Material(renderer::Texture2D* diffuseMap, renderer::Texture2D* specularMap, renderer::Texture2D* normalMap, renderer::Texture2D* occlusionMap, renderer::Texture2D* emissiveMap, renderer::Shader* shader) :
-        diffuseMap(diffuseMap),
-        specularMap(specularMap),
-        normalMap(normalMap),
-        occlusionMap(occlusionMap),
-        emissiveMap(emissiveMap),
-        shader(shader) { }
+    void initMaterial(Material& material, renderer::Texture2D* diffuseMap, renderer::Texture2D* specularMap, renderer::Texture2D* normalMap, renderer::Texture2D* occlusionMap, renderer::Texture2D* emissiveMap, renderer::Shader* shader) {
+        material.diffuseMap = diffuseMap;
+        material.specularMap = specularMap;
+        material.normalMap = normalMap;
+        material.occlusionMap = occlusionMap;
+        material.emissiveMap = emissiveMap;
+        material.shader = shader;
+    }
 
     void useMaterial(const Material& material) {
         useTexture2D(*material.diffuseMap, GL_TEXTURE0);

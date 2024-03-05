@@ -10,8 +10,8 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-namespace component {
-    struct Model {
-        util::container::tree::root<renderer::Part> meshTree;
-    };
+namespace renderer {
+    using Model = util::container::Tree<Part*>;
+
+    void drawModel(Model& model, math::TransformMatrix modelTransformMatrix);
 }
