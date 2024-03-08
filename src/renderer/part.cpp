@@ -14,7 +14,7 @@ namespace renderer {
     }
 
     math::TransformMatrix drawPart(const renderer::Part& part, const math::TransformMatrix* parentTransformMatrix, GLuint u_modelData) {
-        math::TransformMatrix partTransformMatrix = glm::inverse(*parentTransformMatrix) * (*part.localTransformMatrix) * (*parentTransformMatrix);
+        math::TransformMatrix partTransformMatrix = glm::inverse(*part.localTransformMatrix) * (*parentTransformMatrix) * (*part.localTransformMatrix);
         renderer::uniformBuffer::ModelData modelData(&partTransformMatrix);
 
         glBindBuffer(GL_UNIFORM_BUFFER, u_modelData);

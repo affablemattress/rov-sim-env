@@ -15,11 +15,7 @@
 namespace renderer {
     #pragma pack(1)
     struct Vertex {
-        GLfloat pos[3];
-        GLfloat normal[3];
-        GLfloat tangent[3];
-        GLfloat bitangent[3];
-        GLfloat UV[2];
+        GLfloat data[14];
     };
     #pragma pack()
 

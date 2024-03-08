@@ -83,6 +83,7 @@ project(cmake-boilerplate)
     src/renderer/shader.cpp 
     src/renderer/material.cpp 
     src/renderer/part.cpp 
+    src/renderer/model.cpp 
     src/window/callbackGLFW.cpp 
     src/window/window.cpp
     src/systems/gui.cpp

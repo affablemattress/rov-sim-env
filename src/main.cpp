@@ -150,62 +150,10 @@ int main(int argc, char **args) {
 // ! ||--------------------------------------------------------------------------------||
 // ! ||                                 LOAD MODEL TRY                                 ||
 // ! ||--------------------------------------------------------------------------------||
-    std::string modelPath = PROJECT_PATH "res/model/survival-backpack/scene.gltf";
-    std::string modelDirectory = modelPath.substr(0, modelPath.find_last_of('/') + 1);
 
-    spdlog::info("Loading model at path: {0}", modelPath.c_str());
-
-    const aiScene* scene = aiImporter.ReadFile(modelPath.c_str(), 
-                                                 aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices | aiProcess_CalcTangentSpace |aiProcess_RemoveRedundantMaterials | aiProcess_FixInfacingNormals | aiProcess_ImproveCacheLocality | aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph);
-    if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-        spdlog::error("Couldn't load model: {0}", modelPath.c_str());
-        spdlog::error(aiImporter.GetErrorString());
-        app::lifetime::killAll(1);
-    }
-
-    aiString texturePath;
-    spdlog::debug("diffuse {0}", (int)scene->mMaterials[0]->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath));
-    spdlog::debug("path {0}", texturePath.C_Str());
-    spdlog::debug("specular {0}", (int)scene->mMaterials[0]->GetTexture(aiTextureType_METALNESS, 0, &texturePath));
-    spdlog::debug("path {0}", texturePath.C_Str());
-    spdlog::debug("normal {0}", (int)scene->mMaterials[0]->GetTexture(aiTextureType_NORMALS, 0, &texturePath));
-    spdlog::debug("path {0}", texturePath.C_Str());
-    aiNode* currentNode = scene->mRootNode;
-    
-    math::TransformMatrix& nodeLocalTransform = localTransforms.emplace_back(glm::mat4());
-    memcpy(&nodeLocalTransform, &currentNode->mTransformation, sizeof(glm::mat4));
-    nodeLocalTransform = glm::transpose(nodeLocalTransform);
-    
-    /*for(size_t i = 0; i < currentNode->mNumMeshes; i++) {
-        aiMesh* currentAssimpMesh = scene->mMeshes[currentNode->mMeshes[i]];
-
-        renderer::Mesh newMesh;
-        renderer::d_Mesh* newMeshData renderer::loadMeshFromAssimpMesh(currentAssimpMesh); 
-        renderer::pushMesh(newMesh, newMeshData);
-
-        // ! ||--------------------------------------------------------------------------------||
-        // ! ||                                 LOAD MATERIALS                                 ||
-        // ! ||--------------------------------------------------------------------------------||
-        aiMaterial* currentMaterial = scene->mMaterials[newMesh.mMaterialIndex];
-
-        spdlog::info(currentMaterial->GetName().C_Str());
-        spdlog::info(currentMaterial->mProperties[0]->);
-        for(size_t j = 0; j < currentMaterial->GetTextureCount(aiTextureType_DIFFUSE); j++) {
-
-        }
-
-        for(size_t j = 0; j < currentMaterial->GetTextureCount(aiTextureType_SPECULAR) && j < 2; j++) {
-
-        }
-
-        for(size_t j = 0; j < currentMaterial->GetTextureCount(aiTextureType_NORMALS) && j < 2; j++) {
-        }
-
-        newPart.shader = modelShader;
-
-        renderer::freeMesh(newMeshData);
-
-    }*/
+    renderer::Model* packModel = &models.emplace_back();
+    renderer::loadAndPushAssimpModel(aiImporter, *packModel, PROJECT_PATH "res/model/survival-backpack/scene.gltf",
+                                     mainShader, textures, materials, meshes, localTransforms, parts);
 
     // ! ||--------------------------------------------------------------------------------||
     // ! ||                                INITIALIZE SCENE                                ||
@@ -316,12 +264,17 @@ int main(int argc, char **args) {
             }
 
             {
+                math::TransformMatrix rotator = glm::rotate(math::identityTransformMatrix, -1.57f, glm::vec3(1.0f, 0.0f, 0.0f));
+                renderer::drawModel(packModel, &rotator, u_modelData);
+            } 
+
+            {
                 renderer::usePart(*cubePart);
 
                 for (size_t i = 0; i < batchCubes.size(); i++)
                 {
                     math::TransformMatrix cubeTransformMatrix = math::buildTransformMatrix(batchCubes.at(i).position, batchCubes.at(i).rotation, batchCubes.at(i).scale);
-                    renderer::drawPart(*cubePart, cubeTransform, u_modelData);
+                    renderer::drawPart(*cubePart, &cubeTransformMatrix, u_modelData);
                 }
             }
 

@@ -20,7 +20,7 @@ namespace renderer {
     }
 
     d_Mesh* loadMeshFromAssimpMesh(aiMesh* assimpMesh) {
-        spdlog::info("Loading (assimp) mesh [{0}] with {1} vertices.", assimpMesh->mName.C_Str(), assimpMesh->mNumVertices);
+        spdlog::info("Loading (assimp) mesh [{0}] with [{1}] vertices.", assimpMesh->mName.C_Str(), assimpMesh->mNumVertices);
 
         d_Mesh* data = new d_Mesh;
 
@@ -30,17 +30,17 @@ namespace renderer {
 
         int numVertices = assimpMesh->mNumVertices;
         for(size_t i = 0; i < numVertices; i++) {
-            memcpy(&vertexData[i].pos, &assimpMesh->mVertices[i], sizeof(GLfloat) * 3);
-            memcpy(&vertexData[i].normal, &assimpMesh->mNormals[i], sizeof(GLfloat) * 3);
-            memcpy(&vertexData[i].tangent, &assimpMesh->mTangents[i], sizeof(GLfloat) * 3);
-            memcpy(&vertexData[i].bitangent, &assimpMesh->mBitangents[i], sizeof(GLfloat) * 3);
-            memcpy(&vertexData[i].UV, &assimpMesh->mTextureCoords[i], sizeof(GLfloat) * 2);
+            memcpy(&vertexData[i].data[0], &assimpMesh->mVertices[i], sizeof(GLfloat) * 3);
+            memcpy(&vertexData[i].data[3], &assimpMesh->mNormals[i], sizeof(GLfloat) * 3);
+            memcpy(&vertexData[i].data[6], &assimpMesh->mTangents[i], sizeof(GLfloat) * 3);
+            memcpy(&vertexData[i].data[9], &assimpMesh->mBitangents[i], sizeof(GLfloat) * 3);
+            memcpy(&vertexData[i].data[12], &assimpMesh->mTextureCoords[0][i], sizeof(GLfloat) * 2);
         }
 
         data->numElements = assimpMesh->mNumFaces * 3;
         data->elementBuffer = new GLuint[data->numElements];
         for(size_t i = 0; i < assimpMesh->mNumFaces; i++) {
-            memcpy(&data->elementBuffer[i * 3], &assimpMesh->mFaces->mIndices, sizeof(GLuint) * 3);
+            memcpy(&data->elementBuffer[i * 3], assimpMesh->mFaces[i].mIndices, sizeof(GLuint) * 3);
         }
 
         return data;
@@ -57,6 +57,7 @@ namespace renderer {
         int numVertexAttributes = 5;
         int vertexAttributeSizes[] = { 3, 3, 3, 3, 2 };
 
+        glBindVertexArray(0);
 
         glGenBuffers(1, &mesh.VBOID);
         glBindBuffer(GL_ARRAY_BUFFER, mesh.VBOID);
@@ -68,11 +69,10 @@ namespace renderer {
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, data->numElements * sizeof(GLuint), data->elementBuffer, GL_STATIC_DRAW);
         mesh.numElements = data->numElements;
 
+        glBindBuffer(GL_ARRAY_BUFFER, mesh.VBOID);
 
         glGenVertexArrays(1, &mesh.VAOID);
         glBindVertexArray(mesh.VAOID);
-
-        glBindBuffer(GL_ARRAY_BUFFER, mesh.VBOID);
 
         //calculate attribute stride
         size_t stride = 0; 
